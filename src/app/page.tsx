@@ -3,12 +3,17 @@ import { useState, useEffect, useMemo } from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import LivestockSidebar from '@/components/livestock-sidebar';
 import LivestockDetails from '@/components/livestock-details';
-import { getAnimalIds } from '@/lib/data';
+import { getAnimalIds, getAnimal } from '@/lib/data';
+import type { Livestock } from '@/lib/types';
 
 export default function Home() {
   const animalIds = useMemo(() => getAnimalIds(), []);
   const [selectedAnimalId, setSelectedAnimalId] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+
+  const animals = useMemo(() => {
+    return animalIds.map(id => getAnimal(id)).filter(animal => animal !== undefined) as Livestock[];
+  }, [animalIds]);
 
   useEffect(() => {
     setIsClient(true);
@@ -25,7 +30,7 @@ export default function Home() {
     <div className="bg-slate-50 min-h-screen">
       <SidebarProvider>
         <LivestockSidebar
-          animalIds={animalIds}
+          animals={animals}
           selectedAnimalId={selectedAnimalId}
           onSelect={setSelectedAnimalId}
         />
