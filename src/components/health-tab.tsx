@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const healthLogSchema = z.object({
   type: z.enum(['Vaksinasi', 'Pengobatan', 'Lainnya']),
@@ -53,6 +54,8 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
     });
     reset();
   };
+
+  const sortedLog = [...animal.healthLog].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return (
     <div className="space-y-6">
@@ -106,6 +109,42 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
               Simpan Catatan
             </Button>
           </form>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Riwayat Kesehatan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tanggal</TableHead>
+                  <TableHead>Perlakuan</TableHead>
+                  <TableHead>Jenis Obat/Vaksin</TableHead>
+                  <TableHead>Keterangan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedLog.length > 0 ? sortedLog.map((log, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{log.date.toLocaleDateString('id-ID')}</TableCell>
+                    <TableCell>{log.type}</TableCell>
+                    <TableCell>{log.vaccineOrMedicineName || log.detail || '-'}</TableCell>
+                    <TableCell>{log.notes || '-'}</TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                      Belum ada riwayat kesehatan.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
