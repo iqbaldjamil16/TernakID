@@ -17,8 +17,17 @@ import { Save } from 'lucide-react';
 const healthLogSchema = z.object({
   type: z.enum(['Vaksinasi', 'Penyakit', 'Pengobatan', 'Lainnya']),
   date: z.string().min(1, 'Tanggal harus diisi'),
-  detail: z.string().min(1, 'Detail harus diisi'),
+  vaccineOrMedicineName: z.string().optional(),
+  diagnosis: z.string().optional(),
   notes: z.string().optional(),
+}).refine(data => {
+    if (data.type === 'Penyakit' && !data.diagnosis) return false;
+    if ((data.type === 'Vaksinasi' || data.type === 'Pengobatan') && !data.vaccineOrMedicineName) return false;
+    if (data.type === 'Lainnya' && !data.diagnosis && !data.vaccineOrMedicineName) return false;
+    return true;
+}, {
+    message: "Detail harus diisi sesuai jenis catatan",
+    path: ['diagnosis'], // You can point to a specific field or a general one
 });
 
 type HealthLogFormData = z.infer<typeof healthLogSchema>;
@@ -30,10 +39,12 @@ interface HealthTabProps {
 
 export function HealthTab({ animal, onAddLog }: HealthTabProps) {
   const { toast } = useToast();
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<HealthLogFormData>({
+  const { register, handleSubmit, control, reset, watch, formState: { errors } } = useForm<HealthLogFormData>({
     resolver: zodResolver(healthLogSchema),
     defaultValues: { type: 'Vaksinasi', notes: '' }
   });
+
+  const selectedType = watch('type');
 
   const onSubmit = (data: HealthLogFormData) => {
     onAddLog(data as Omit<HealthLog, 'date'> & { date: string });
@@ -81,11 +92,23 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
                 {errors.date && <p className="text-destructive text-sm mt-1">{errors.date.message}</p>}
               </div>
             </div>
-            <div>
-              <label>Detail (Nama Vaksin, Diagnosa, Nama Obat)</label>
-              <Input placeholder="Cth: PMK Dosis 2" {...register('detail')} />
-              {errors.detail && <p className="text-destructive text-sm mt-1">{errors.detail.message}</p>}
-            </div>
+            
+            {(selectedType === 'Vaksinasi' || selectedType === 'Pengobatan' || selectedType === 'Lainnya') && (
+              <div>
+                <label>Nama Vaksin / Obat</label>
+                <Input placeholder={selectedType === 'Vaksinasi' ? "Cth: PMK Dosis 2" : "Cth: Antibiotik X"} {...register('vaccineOrMedicineName')} />
+                {errors.vaccineOrMedicineName && <p className="text-destructive text-sm mt-1">{errors.vaccineOrMedicineName.message}</p>}
+              </div>
+            )}
+
+            {(selectedType === 'Penyakit' || selectedType === 'Lainnya') && (
+              <div>
+                <label>Diagnosa / Gejala</label>
+                <Input placeholder="Cth: Diare, nafsu makan turun" {...register('diagnosis')} />
+                {errors.diagnosis && <p className="text-destructive text-sm mt-1">{errors.diagnosis.message}</p>}
+              </div>
+            )}
+            
             <div>
               <label>Keterangan (Opsional)</label>
               <Textarea placeholder="Cth: Diberikan obat anti-bloat oral" {...register('notes')} />
@@ -109,7 +132,8 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Jenis</TableHead>
-                  <TableHead>Detail</TableHead>
+                  <TableHead>Vaksin/Obat</TableHead>
+                  <TableHead>Diagnosa/Gejala</TableHead>
                   <TableHead>Keterangan</TableHead>
                 </TableRow>
               </TableHeader>
@@ -118,12 +142,13 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
                   <TableRow key={index}>
                     <TableCell>{log.date.toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>{log.type}</TableCell>
-                    <TableCell>{log.detail}</TableCell>
+                    <TableCell>{log.vaccineOrMedicineName || '-'}</TableCell>
+                    <TableCell>{log.diagnosis || '-'}</TableCell>
                     <TableCell>{log.notes || '-'}</TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       Belum ada riwayat kesehatan.
                     </TableCell>
                   </TableRow>

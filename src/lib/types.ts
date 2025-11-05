@@ -1,7 +1,8 @@
 export type HealthLog = {
   date: Date;
   type: 'Vaksinasi' | 'Penyakit' | 'Pengobatan' | 'Lainnya';
-  detail: string;
+  vaccineOrMedicineName?: string;
+  diagnosis?: string;
   notes?: string;
 };
 
