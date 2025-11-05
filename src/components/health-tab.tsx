@@ -136,7 +136,6 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Jenis</TableHead>
                   <TableHead>Vaksin/Obat</TableHead>
-                  <TableHead>Diagnosa/Gejala</TableHead>
                   <TableHead>Keterangan</TableHead>
                 </TableRow>
               </TableHeader>
@@ -145,13 +144,12 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
                   <TableRow key={index}>
                     <TableCell>{log.date.toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>{log.type}</TableCell>
-                    <TableCell>{log.vaccineOrMedicineName || '-'}</TableCell>
-                    <TableCell>{log.diagnosis || '-'}</TableCell>
+                    <TableCell>{log.vaccineOrMedicineName || log.diagnosis || '-'}</TableCell>
                     <TableCell>{log.notes || '-'}</TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={4} className="text-center text-muted-foreground">
                       Belum ada riwayat kesehatan.
                     </TableCell>
                   </TableRow>

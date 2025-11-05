@@ -174,3 +174,4 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
+
