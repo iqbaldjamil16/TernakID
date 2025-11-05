@@ -28,9 +28,9 @@ const PredictLivestockHealthOutputSchema = z.object({
   animalId: z.string().describe('The livestock animal ID.'),
   predictedIssues: z.array(
     z.object({
-      issue: z.string().describe('Predicted health issue.'),
-      likelihood: z.string().describe('Likelihood of the issue occurring (High, Medium, Low).'),
-      recommendations: z.string().describe('Recommended preventive measures.'),
+      issue: z.string().describe('Predicted health issue in Indonesian.'),
+      likelihood: z.string().describe('Likelihood of the issue occurring (Tinggi, Sedang, Rendah).'),
+      recommendations: z.string().describe('Recommended preventive measures in Indonesian.'),
     })
   ).describe('List of predicted health issues and recommendations.'),
 });
@@ -44,30 +44,35 @@ const prompt = ai.definePrompt({
   name: 'predictLivestockHealthPrompt',
   input: {schema: PredictLivestockHealthInputSchema},
   output: {schema: PredictLivestockHealthOutputSchema},
-  prompt: `Anda adalah seorang dokter hewan ahli yang berspesialisasi dalam manajemen kesehatan ternak. Berdasarkan catatan kesehatan yang diberikan, prediksi potensi masalah kesehatan di masa depan untuk ternak dan sarankan tindakan pencegahan.
+  prompt: `You are an expert veterinarian specializing in livestock health management. Based on the provided health records, predict potential future health issues for the livestock and suggest preventive measures. All outputs (issue, likelihood, and recommendations) must be in Indonesian.
 
-ID Hewan: {{{animalId}}}
+Animal ID: {{{animalId}}}
 
-Catatan Kesehatan:
+Health Records:
 {{#each healthRecords}}
-  - Tanggal: {{date}}, Jenis: {{type}}, Detail: {{detail}}, Catatan: {{notes}}
+  - Date: {{date}}, Type: {{type}}, Detail: {{detail}}{{#if notes}}, Notes: {{notes}}{{/if}}
 {{/each}}
 
-Berdasarkan riwayat ini, prediksi potensi masalah kesehatan, kemungkinan (Tinggi, Sedang, Rendah), dan rekomendasi. Jawaban harus dalam Bahasa Indonesia.
+Based on this history, predict potential health issues, their likelihood (Tinggi, Sedang, or Rendah), and recommendations. The response must be in JSON format.
 
-Contoh output dalam format JSON:
+Example JSON output:
 {
   "animalId": "KIT-01",
   "predictedIssues": [
     {
       "issue": "Pneumonia",
       "likelihood": "Sedang",
-      "recommendations": "Tingkatkan ventilasi dan pantau gejala pernapasan."
+      "recommendations": "Tingkatkan ventilasi dan pantau gejala pernapasan secara rutin. Pastikan kandang tetap kering dan bersih."
     },
     {
-      "issue": "Koreng Kaki",
+      "issue": "Koreng Kaki (Foot Rot)",
       "likelihood": "Rendah",
-      "recommendations": "Jaga kebersihan dan kekeringan kandang."
+      "recommendations": "Jaga kebersihan dan kekeringan area kandang, terutama di sekitar tempat pakan dan minum. Lakukan pemeriksaan kuku secara berkala."
+    },
+    {
+      "issue": "Kembung (Bloat)",
+      "likelihood": "Tinggi",
+      "recommendations": "Hindari perubahan pakan yang mendadak. Sediakan akses air bersih yang cukup dan berikan pakan serat kasar sebelum ternak digembalakan ke padang rumput hijau."
     }
   ]
 }
