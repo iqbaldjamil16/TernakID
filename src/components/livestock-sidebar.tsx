@@ -25,7 +25,7 @@ export default function LivestockSidebar({ animalIds, selectedAnimalId, onSelect
             <div className="flex items-center justify-center size-8 rounded-lg bg-primary text-primary-foreground">
                 <Leaf className="size-5" />
             </div>
-            <span className="text-lg font-semibold text-primary">E-TernakID</span>
+            <span className="text-lg font-semibold text-primary">Data E-TernakID</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
