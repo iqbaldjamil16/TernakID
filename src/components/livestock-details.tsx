@@ -82,9 +82,9 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
              <Image
                 src={`https://picsum.photos/seed/${animal.id}/200/200`}
                 alt={`Foto ${animal.name}`}
-                width={160}
-                height={160}
-                className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-6"
+                width={200}
+                height={200}
+                className="w-40 h-40 sm:w-48 sm:h-48 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8"
                 data-ai-hint="livestock animal"
               />
             <div>
