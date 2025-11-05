@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { Save } from 'lucide-react';
 
 const pedigreeSchema = z.object({
   dam: z.object({
@@ -141,7 +142,10 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
               </div>
             </div>
             <Separator />
-            <Button type="submit">Simpan Silsilah Induk</Button>
+            <Button type="submit">
+                <Save className="mr-2 h-4 w-4" />
+                Simpan Silsilah
+            </Button>
           </form>
         </CardContent>
       </Card>

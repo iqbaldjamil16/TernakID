@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { HealthPrediction } from './health-prediction';
+import { Save } from 'lucide-react';
 
 const healthLogSchema = z.object({
   type: z.enum(['Vaksinasi', 'Penyakit', 'Pengobatan', 'Lainnya']),
@@ -90,7 +91,10 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
               <label>Keterangan (Opsional)</label>
               <Textarea placeholder="Cth: Diberikan obat anti-bloat oral" {...register('notes')} />
             </div>
-            <Button type="submit">Simpan Catatan</Button>
+            <Button type="submit">
+              <Save className="mr-2 h-4 w-4" />
+              Simpan Catatan
+            </Button>
           </form>
         </CardContent>
       </Card>

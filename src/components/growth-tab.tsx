@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Save } from 'lucide-react';
 
 const growthRecordSchema = z.object({
   weight: z.number({ invalid_type_error: 'Bobot harus angka' }).positive('Bobot harus lebih dari 0'),
@@ -62,7 +63,10 @@ export function GrowthTab({ animal, onAddRecord }: GrowthTabProps) {
               <Input type="number" placeholder="Bobot (kg)" {...register('weight', { valueAsNumber: true })} />
               {errors.weight && <p className="text-destructive text-sm mt-1">{errors.weight.message}</p>}
             </div>
-            <Button type="submit" className="w-full sm:w-1/3">Simpan Bobot</Button>
+            <Button type="submit" className="w-full sm:w-1/3">
+              <Save className="mr-2 h-4 w-4" />
+              Simpan Bobot
+            </Button>
           </form>
         </CardContent>
       </Card>

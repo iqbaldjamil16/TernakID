@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Save } from 'lucide-react';
 
 const reproductionLogSchema = z.object({
   type: z.enum(['Inseminasi Buatan (IB)', 'Kawin Alami', 'Kebuntingan Dideteksi', 'Melahirkan', 'Kelahiran', 'Abortus', 'Lainnya']),
@@ -91,7 +92,10 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
               <label>Keterangan (Opsional)</label>
               <Textarea placeholder="Cth: Birahi malam, IB sukses dilakukan pagi hari." {...register('notes')} />
             </div>
-            <Button type="submit">Simpan Catatan</Button>
+            <Button type="submit">
+              <Save className="mr-2 h-4 w-4" />
+              Simpan Catatan
+            </Button>
           </form>
         </CardContent>
       </Card>
