@@ -44,30 +44,30 @@ const prompt = ai.definePrompt({
   name: 'predictLivestockHealthPrompt',
   input: {schema: PredictLivestockHealthInputSchema},
   output: {schema: PredictLivestockHealthOutputSchema},
-  prompt: `You are an expert veterinarian specializing in livestock health management. Based on the provided health records, predict potential future health issues for the livestock and suggest preventive measures.
+  prompt: `Anda adalah seorang dokter hewan ahli yang berspesialisasi dalam manajemen kesehatan ternak. Berdasarkan catatan kesehatan yang diberikan, prediksi potensi masalah kesehatan di masa depan untuk ternak dan sarankan tindakan pencegahan.
 
-Animal ID: {{{animalId}}}
+ID Hewan: {{{animalId}}}
 
-Health Records:
+Catatan Kesehatan:
 {{#each healthRecords}}
-  - Date: {{date}}, Type: {{type}}, Detail: {{detail}}, Notes: {{notes}}
+  - Tanggal: {{date}}, Jenis: {{type}}, Detail: {{detail}}, Catatan: {{notes}}
 {{/each}}
 
-Based on this history, predict potential health issues, likelihood (High, Medium, Low), and recommendations. Be concise.
+Berdasarkan riwayat ini, prediksi potensi masalah kesehatan, kemungkinan (Tinggi, Sedang, Rendah), dan rekomendasi. Jawaban harus dalam Bahasa Indonesia.
 
-Output in JSON format:
+Contoh output dalam format JSON:
 {
   "animalId": "KIT-01",
   "predictedIssues": [
     {
       "issue": "Pneumonia",
-      "likelihood": "Medium",
-      "recommendations": "Improve ventilation and monitor for respiratory symptoms."
+      "likelihood": "Sedang",
+      "recommendations": "Tingkatkan ventilasi dan pantau gejala pernapasan."
     },
     {
-      "issue": "Foot rot",
-      "likelihood": "Low",
-      "recommendations": "Maintain clean and dry pen conditions."
+      "issue": "Koreng Kaki",
+      "likelihood": "Rendah",
+      "recommendations": "Jaga kebersihan dan kekeringan kandang."
     }
   ]
 }

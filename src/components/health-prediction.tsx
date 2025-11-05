@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { HealthLog } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Lightbulb, Loader2, TriangleAlert } from 'lucide-react';
+import { Lightbulb, Loader2, Sparkles, TriangleAlert } from 'lucide-react';
 import type { PredictLivestockHealthOutput } from '@/ai/flows/predict-livestock-health';
 
 interface HealthPredictionProps {
@@ -63,23 +63,29 @@ export function HealthPrediction({ animalId, healthRecords }: HealthPredictionPr
   };
 
   return (
-    <Card>
+    <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-green-50">
       <CardHeader>
-        <CardTitle>Prediksi Kesehatan AI</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="text-purple-600" />
+          <span>Prediksi Kesehatan AI</span>
+        </CardTitle>
         <CardDescription>
           Gunakan AI untuk menganalisis riwayat kesehatan dan memprediksi potensi masalah di masa depan.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-start gap-4">
-          <Button onClick={handlePredict} disabled={isLoading}>
+          <Button onClick={handlePredict} disabled={isLoading} size="lg" className="bg-purple-600 hover:bg-purple-700 text-white">
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Menganalisis...
               </>
             ) : (
-              'Dapatkan Prediksi Kesehatan'
+               <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Dapatkan Prediksi Kesehatan
+               </>
             )}
           </Button>
 
@@ -93,8 +99,8 @@ export function HealthPrediction({ animalId, healthRecords }: HealthPredictionPr
 
           {prediction && prediction.predictedIssues && (
             <div className="w-full space-y-4 mt-4">
-                <Alert>
-                    <Lightbulb className="h-4 w-4" />
+                <Alert className="bg-white">
+                    <Lightbulb className="h-4 w-4 text-yellow-500" />
                     <AlertTitle>Hasil Prediksi untuk {prediction.animalId}</AlertTitle>
                     <AlertDescription>
                         Berikut adalah potensi masalah kesehatan berdasarkan data yang ada.
@@ -102,13 +108,13 @@ export function HealthPrediction({ animalId, healthRecords }: HealthPredictionPr
                 </Alert>
                 <div className="grid gap-4 md:grid-cols-2">
                     {prediction.predictedIssues.map((issue, index) => (
-                        <Card key={index}>
+                        <Card key={index} className="shadow-md">
                             <CardHeader>
                                 <CardTitle className="text-lg">{issue.issue}</CardTitle>
                                 <CardDescription>
                                     Kemungkinan: <span className={`font-bold ${
-                                        issue.likelihood === 'High' ? 'text-red-600' :
-                                        issue.likelihood === 'Medium' ? 'text-yellow-600' : 'text-green-600'
+                                        issue.likelihood.toLowerCase() === 'tinggi' ? 'text-red-600' :
+                                        issue.likelihood.toLowerCase() === 'sedang' ? 'text-yellow-600' : 'text-green-600'
                                     }`}>{issue.likelihood}</span>
                                 </CardDescription>
                             </CardHeader>
