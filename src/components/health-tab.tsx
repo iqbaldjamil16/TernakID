@@ -122,7 +122,7 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
-                  <TableHead>Jenis</TableHead>
+                  <TableHead>Perlakuan</TableHead>
                   <TableHead>Jenis Obat/Vaksin</TableHead>
                   <TableHead>Keterangan</TableHead>
                 </TableRow>
