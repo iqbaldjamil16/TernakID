@@ -72,7 +72,7 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
         <div className="bg-primary text-primary-foreground p-6 sm:p-8">
           <div className="flex items-center justify-between">
              <div className="flex items-center gap-2">
-              <SidebarTrigger className="md:hidden size-9" />
+              <SidebarTrigger className="md:hidden size-11" />
               <h1 className="text-3xl font-bold">E-TernakID</h1>
             </div>
             <div className="flex items-center space-x-2">
@@ -174,4 +174,3 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
-
