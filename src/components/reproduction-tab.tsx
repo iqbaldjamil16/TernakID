@@ -99,20 +99,6 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
           </form>
         </CardContent>
       </Card>
-      
-      <Card className="bg-yellow-50 border-yellow-300">
-        <CardHeader>
-            <CardTitle>Status Fungsional Ternak</CardTitle>
-            <CardDescription>Peran ternak dalam breeding adalah **{reproduction.role}**.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                <li>Uji Kualitas Semen Terakhir: <strong>{reproduction.semenQuality}</strong> - {reproduction.semenTestDate ? reproduction.semenTestDate.toLocaleDateString('id-ID') : 'N/A'}.</li>
-                <li>Jumlah Kawin/IB Terakhir (3 bulan): <strong>{reproduction.recentMatings}</strong> kali.</li>
-                <li>Tingkat Keberhasilan (Semen/Bunting): <strong>{reproduction.successRate}</strong>.</li>
-            </ul>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
