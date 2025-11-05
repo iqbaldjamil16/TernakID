@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "livestock-1",
+      "description": "A cow in a field",
+      "imageUrl": "https://picsum.photos/seed/cow1/400/400",
+      "imageHint": "cow field"
+    }
+  ]
 }
