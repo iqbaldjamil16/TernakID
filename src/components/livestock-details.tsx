@@ -82,13 +82,13 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
               </Button>
             </div>
           </div>
-          <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center">
+          <div className="mt-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
              <Image
                 src={animal.photoUrl || `https://picsum.photos/seed/${animal.id}/400/400`}
                 alt={`Foto ${animal.name}`}
                 width={400}
                 height={400}
-                className="w-56 h-56 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8"
+                className="w-56 h-56 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8 mx-auto sm:mx-0"
                 data-ai-hint="livestock animal"
                 priority
               />
