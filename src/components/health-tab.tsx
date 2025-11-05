@@ -23,11 +23,11 @@ const healthLogSchema = z.object({
 }).refine(data => {
     if (data.type === 'Penyakit' && !data.diagnosis) return false;
     if ((data.type === 'Vaksinasi' || data.type === 'Pengobatan') && !data.vaccineOrMedicineName) return false;
-    if (data.type === 'Lainnya' && !data.diagnosis && !data.vaccineOrMedicineName) return false;
+    if (data.type === 'Lainnya' && !data.notes && !data.diagnosis && !data.vaccineOrMedicineName) return false;
     return true;
 }, {
     message: "Detail harus diisi sesuai jenis catatan",
-    path: ['diagnosis'], // You can point to a specific field or a general one
+    path: ['diagnosis'], // Point to a field to display the general error
 });
 
 type HealthLogFormData = z.infer<typeof healthLogSchema>;
@@ -41,7 +41,7 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
   const { toast } = useToast();
   const { register, handleSubmit, control, reset, watch, formState: { errors } } = useForm<HealthLogFormData>({
     resolver: zodResolver(healthLogSchema),
-    defaultValues: { type: 'Vaksinasi', notes: '' }
+    defaultValues: { type: 'Vaksinasi', notes: '', diagnosis: '', vaccineOrMedicineName: '' }
   });
 
   const selectedType = watch('type');
@@ -96,16 +96,16 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
             {(selectedType === 'Vaksinasi' || selectedType === 'Pengobatan' || selectedType === 'Lainnya') && (
               <div>
                 <label>Nama Vaksin / Obat</label>
-                <Input placeholder={selectedType === 'Vaksinasi' ? "Cth: PMK Dosis 2" : "Cth: Antibiotik X"} {...register('vaccineOrMedicineName')} />
-                {errors.vaccineOrMedicineName && <p className="text-destructive text-sm mt-1">{errors.vaccineOrMedicineName.message}</p>}
+                <Input placeholder={selectedType === 'Vaksinasi' ? "Cth: PMK Dosis 2" : (selectedType === 'Pengobatan' ? "Cth: Antibiotik X" : "Isi jika ada")} {...register('vaccineOrMedicineName')} />
+                {(errors.vaccineOrMedicineName || (errors.diagnosis && data.type !== 'Penyakit')) && <p className="text-destructive text-sm mt-1">{(errors.vaccineOrMedicineName?.message || errors.diagnosis?.message)}</p>}
               </div>
             )}
 
             {(selectedType === 'Penyakit' || selectedType === 'Lainnya') && (
               <div>
                 <label>Diagnosa / Gejala</label>
-                <Input placeholder="Cth: Diare, nafsu makan turun" {...register('diagnosis')} />
-                {errors.diagnosis && <p className="text-destructive text-sm mt-1">{errors.diagnosis.message}</p>}
+                <Input placeholder={selectedType === 'Penyakit' ? "Cth: Diare, nafsu makan turun" : "Isi jika ada"} {...register('diagnosis')} />
+                 {(errors.diagnosis && (data.type === 'Penyakit' || data.type === 'Lainnya')) && <p className="text-destructive text-sm mt-1">{errors.diagnosis.message}</p>}
               </div>
             )}
             
