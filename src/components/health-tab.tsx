@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { HealthPrediction } from './health-prediction';
 import { Save } from 'lucide-react';
 
 const healthLogSchema = z.object({
@@ -98,8 +97,6 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
           </form>
         </CardContent>
       </Card>
-
-      <HealthPrediction animalId={animal.id} healthRecords={animal.healthLog} />
 
       <Card>
         <CardHeader>
