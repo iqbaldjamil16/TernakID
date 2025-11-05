@@ -36,7 +36,6 @@ export default function LivestockSidebar({ animals, selectedAnimalId, onSelect }
   return (
     <Sidebar>
       <SidebarHeader>
-        <SheetTitle>Cari Ternak</SheetTitle>
         <div className="flex items-center gap-2">
             <div className="flex items-center justify-center size-8 rounded-lg bg-primary text-primary-foreground">
                 <Leaf className="size-5" />
