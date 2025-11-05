@@ -20,6 +20,7 @@ import { ReproductionTab } from './reproduction-tab';
 import { GrowthTab } from './growth-tab';
 import { PedigreeTab } from './pedigree-tab';
 import EditAnimalModal from './edit-animal-modal';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export default function LivestockDetails({ animalId }: { animalId: string }) {
   const [animal, setAnimal] = useState<Livestock | null>(null);
@@ -70,7 +71,10 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
       <div className="bg-card rounded-xl overflow-hidden shadow-lg">
         <div className="bg-primary text-primary-foreground p-6 sm:p-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">E-TernakID</h1>
+             <div className="flex items-center gap-2">
+              <SidebarTrigger className="md:hidden" />
+              <h1 className="text-3xl font-bold">E-TernakID</h1>
+            </div>
             <div className="flex items-center space-x-2">
               <Badge variant="secondary" className="bg-white text-primary hover:bg-white">{animal.status}</Badge>
               <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
