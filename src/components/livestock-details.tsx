@@ -80,12 +80,13 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
           </div>
           <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center">
              <Image
-                src={`https://picsum.photos/seed/${animal.id}/200/200`}
+                src={animal.photoUrl || `https://picsum.photos/seed/${animal.id}/400/400`}
                 alt={`Foto ${animal.name}`}
-                width={200}
-                height={200}
-                className="w-40 h-40 sm:w-48 sm:h-48 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8"
+                width={400}
+                height={400}
+                className="w-48 h-48 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8"
                 data-ai-hint="livestock animal"
+                priority
               />
             <div>
               <h2 className="text-3xl sm:text-4xl font-extrabold">{animal.name}</h2>
@@ -117,12 +118,14 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
           </div>
         </Tabs>
       </div>
-      <EditAnimalModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        animal={animal}
-        onSave={handleUpdate}
-      />
+      {isModalOpen && (
+        <EditAnimalModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          animal={animal}
+          onSave={handleUpdate}
+        />
+      )}
     </>
   );
 }
@@ -142,7 +145,7 @@ const DetailsSkeleton = () => (
                 <Skeleton className="h-8 w-32 bg-white/30" />
             </div>
             <div className="mt-6 flex flex-col sm:flex-row items-center">
-                <Skeleton className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white bg-white/30" />
+                <Skeleton className="w-48 h-48 sm:w-56 sm:h-56 rounded-full border-4 border-white bg-white/30" />
                 <div className="ml-6 space-y-2">
                     <Skeleton className="h-10 w-64 bg-white/30" />
                     <Skeleton className="h-5 w-48 bg-white/30" />

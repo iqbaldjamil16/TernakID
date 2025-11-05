@@ -16,6 +16,7 @@ const generateDefaultData = (id: string): Livestock => {
     id: id,
     name: `Ternak ${id.split('-')[1]}`,
     regId: id,
+    photoUrl: `https://picsum.photos/seed/${id}/400/400`,
     breed: (idNumber % 3 === 0) ? "Sapi Bali" : (idNumber % 3 === 1) ? "Sapi Ongole" : "Simental",
     gender: (idNumber % 2 === 0) ? "Jantan" : "Betina",
     status: (idNumber % 10 === 0) ? "Dijual" : "Produktif",

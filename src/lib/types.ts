@@ -55,6 +55,7 @@ export type Livestock = {
   owner: string;
   address: string;
   birthDate: Date | null;
+  photoUrl?: string;
   healthLog: HealthLog[];
   reproduction: Reproduction;
   reproductionLog: ReproductionLog[];
