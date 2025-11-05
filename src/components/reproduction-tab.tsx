@@ -45,7 +45,6 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
   };
   
   const sortedLog = [...animal.reproductionLog].sort((a, b) => b.date.getTime() - a.date.getTime());
-  const { reproduction } = animal;
 
   return (
     <div className="space-y-6">
@@ -84,7 +83,7 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
               </div>
             </div>
             <div>
-              <label>Detail (No. Semen / Hasil USG / Nama Anak)</label>
+              <label>Detail (ID Batch & Pejantan/Hasil PKB/Nama Anak dll)</label>
               <Input placeholder="Cth: Semen ID: IB-05-BCX" {...register('detail')} />
               {errors.detail && <p className="text-destructive text-sm mt-1">{errors.detail.message}</p>}
             </div>
