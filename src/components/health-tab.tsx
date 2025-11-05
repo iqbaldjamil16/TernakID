@@ -114,7 +114,7 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
             
             <div>
               <label>Keterangan</label>
-              <Textarea placeholder="Cth : VetOxy La 5ml, Hematodin 3ml" {...register('notes')} />
+              <Textarea placeholder="Cth : Avitaminosis/Cacingan dll" {...register('notes')} />
             </div>
             <Button type="submit">
               <Save className="mr-2 h-4 w-4" />
