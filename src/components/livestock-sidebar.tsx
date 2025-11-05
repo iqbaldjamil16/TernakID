@@ -7,9 +7,10 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  SidebarInput,
 } from '@/components/ui/sidebar';
-import { Leaf } from 'lucide-react';
-import React from 'react';
+import { Leaf, Search } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
 
 type LivestockSidebarProps = {
   animalIds: string[];
@@ -18,6 +19,17 @@ type LivestockSidebarProps = {
 };
 
 export default function LivestockSidebar({ animalIds, selectedAnimalId, onSelect }: LivestockSidebarProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredAnimalIds = useMemo(() => {
+    if (!searchTerm) {
+      return animalIds;
+    }
+    return animalIds.filter((id) =>
+      id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [animalIds, searchTerm]);
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -27,10 +39,19 @@ export default function LivestockSidebar({ animalIds, selectedAnimalId, onSelect
             </div>
             <span className="text-lg font-semibold text-primary">Data E-TernakID</span>
         </div>
+         <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <SidebarInput 
+            placeholder="Cari data ternak..." 
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {animalIds.map((id) => (
+          {filteredAnimalIds.map((id) => (
             <SidebarMenuItem key={id}>
               <SidebarMenuButton
                 onClick={() => onSelect(id)}
@@ -41,6 +62,9 @@ export default function LivestockSidebar({ animalIds, selectedAnimalId, onSelect
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+           {filteredAnimalIds.length === 0 && (
+            <p className="px-2 text-sm text-muted-foreground">Ternak tidak ditemukan.</p>
+          )}
         </SidebarMenu>
       </SidebarContent>
        <SidebarFooter>
