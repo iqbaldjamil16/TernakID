@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Pencil } from 'lucide-react';
 import { HealthTab } from './health-tab';
 import { ReproductionTab } from './reproduction-tab';
@@ -65,6 +66,7 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
   }
 
   const age = calculateAge(animal.birthDate);
+  const photoSrc = animal.photoUrl || `https://picsum.photos/seed/${animal.id}/400/400`;
 
   return (
     <>
@@ -83,16 +85,31 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
             </div>
           </div>
           <div className="mt-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
-             <Image
-                src={animal.photoUrl || `https://picsum.photos/seed/${animal.id}/400/400`}
-                alt={`Foto ${animal.name}`}
-                width={400}
-                height={400}
-                className="w-56 h-56 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8 mx-auto sm:mx-0"
-                data-ai-hint="livestock animal"
-                priority
-              />
-            <div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <div className="w-56 h-56 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8 mx-auto sm:mx-0 cursor-pointer">
+                  <Image
+                      src={photoSrc}
+                      alt={`Foto ${animal.name}`}
+                      width={400}
+                      height={400}
+                      className="rounded-full w-full h-full object-cover"
+                      data-ai-hint="livestock animal"
+                      priority
+                    />
+                </div>
+              </DialogTrigger>
+              <DialogContent className="p-0 max-w-xl bg-transparent border-0">
+                <Image
+                  src={photoSrc}
+                  alt={`Foto ${animal.name}`}
+                  width={800}
+                  height={800}
+                  className="rounded-lg object-contain w-full h-full"
+                />
+              </DialogContent>
+            </Dialog>
+            <div className="sm:mt-8 text-center sm:text-left w-full">
               <h2 className="text-3xl sm:text-4xl font-extrabold">{animal.name}</h2>
               <p className="text-sm opacity-90">No. Registrasi: {animal.regId}</p>
               <p className="text-lg font-semibold mt-1">{animal.breed}, {animal.gender}</p>
