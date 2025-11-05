@@ -15,22 +15,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 
 const healthLogSchema = z.object({
-  type: z.enum(['Vaksinasi', 'Penyakit', 'Pengobatan', 'Lainnya']),
+  type: z.enum(['Vaksinasi', 'Pengobatan', 'Lainnya']),
   date: z.string().min(1, 'Tanggal harus diisi'),
   vaccineOrMedicineName: z.string().optional(),
   diagnosis: z.string().optional(),
   notes: z.string().optional(),
 }).refine(data => {
-    if (data.type === 'Penyakit' && !data.diagnosis) {
-        return false;
-    }
     if ((data.type === 'Vaksinasi' || data.type === 'Pengobatan') && !data.vaccineOrMedicineName) {
         return false;
     }
     return true;
 }, {
     message: "Detail harus diisi sesuai jenis catatan",
-    path: ['diagnosis'], // Point to a field to display the general error.
+    path: ['vaccineOrMedicineName'],
 });
 
 type HealthLogFormData = z.infer<typeof healthLogSchema>;
@@ -81,7 +78,6 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Vaksinasi">Vaksinasi</SelectItem>
-                        <SelectItem value="Penyakit">Penyakit</SelectItem>
                         <SelectItem value="Pengobatan">Pengobatan</SelectItem>
                         <SelectItem value="Lainnya">Lainnya</SelectItem>
                       </SelectContent>
@@ -101,14 +97,6 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
                 <label>Jenis Obat/Vaksin</label>
                 <Input placeholder="Cth : VetOxy La 5ml, Hematodin 3ml" {...register('vaccineOrMedicineName')} />
                 {errors.vaccineOrMedicineName && <p className="text-destructive text-sm mt-1">{errors.vaccineOrMedicineName.message}</p>}
-              </div>
-            )}
-
-            {selectedType === 'Penyakit' && (
-              <div>
-                <label>Gejala/Diagnosa</label>
-                <Input placeholder="Cth : VetOxy La 5ml, Hematodin 3ml" {...register('diagnosis')} />
-                 {errors.diagnosis && <p className="text-destructive text-sm mt-1">{errors.diagnosis.message}</p>}
               </div>
             )}
             
