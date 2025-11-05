@@ -21,13 +21,16 @@ const healthLogSchema = z.object({
   diagnosis: z.string().optional(),
   notes: z.string().optional(),
 }).refine(data => {
-    if (data.type === 'Penyakit' && !data.diagnosis) return false;
-    if ((data.type === 'Vaksinasi' || data.type === 'Pengobatan') && !data.vaccineOrMedicineName) return false;
-    if (data.type === 'Lainnya' && !data.notes && !data.diagnosis && !data.vaccineOrMedicineName) return false;
+    if (data.type === 'Penyakit' && !data.diagnosis) {
+        return false;
+    }
+    if ((data.type === 'Vaksinasi' || data.type === 'Pengobatan') && !data.vaccineOrMedicineName) {
+        return false;
+    }
     return true;
 }, {
     message: "Detail harus diisi sesuai jenis catatan",
-    path: ['diagnosis'], // Point to a field to display the general error
+    path: ['diagnosis'], // Point to a field to display the general error.
 });
 
 type HealthLogFormData = z.infer<typeof healthLogSchema>;
@@ -93,24 +96,24 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
               </div>
             </div>
             
-            {(selectedType === 'Vaksinasi' || selectedType === 'Pengobatan' || selectedType === 'Lainnya') && (
+            {(selectedType === 'Vaksinasi' || selectedType === 'Pengobatan') && (
               <div>
                 <label>Nama Vaksin / Obat</label>
-                <Input placeholder={selectedType === 'Vaksinasi' ? "Cth: PMK Dosis 2" : (selectedType === 'Pengobatan' ? "Cth: Antibiotik X" : "Isi jika ada")} {...register('vaccineOrMedicineName')} />
-                {(errors.vaccineOrMedicineName || (errors.diagnosis && data.type !== 'Penyakit')) && <p className="text-destructive text-sm mt-1">{(errors.vaccineOrMedicineName?.message || errors.diagnosis?.message)}</p>}
+                <Input placeholder={selectedType === 'Vaksinasi' ? "Cth: PMK Dosis 2" : "Cth: Antibiotik X"} {...register('vaccineOrMedicineName')} />
+                {errors.vaccineOrMedicineName && <p className="text-destructive text-sm mt-1">{errors.vaccineOrMedicineName.message}</p>}
               </div>
             )}
 
-            {(selectedType === 'Penyakit' || selectedType === 'Lainnya') && (
+            {selectedType === 'Penyakit' && (
               <div>
-                <label>Diagnosa / Gejala</label>
-                <Input placeholder={selectedType === 'Penyakit' ? "Cth: Diare, nafsu makan turun" : "Isi jika ada"} {...register('diagnosis')} />
-                 {(errors.diagnosis && (data.type === 'Penyakit' || data.type === 'Lainnya')) && <p className="text-destructive text-sm mt-1">{errors.diagnosis.message}</p>}
+                <label>Gejala/Diagnosa</label>
+                <Input placeholder="Cth: Diare, nafsu makan turun" {...register('diagnosis')} />
+                 {errors.diagnosis && <p className="text-destructive text-sm mt-1">{errors.diagnosis.message}</p>}
               </div>
             )}
             
             <div>
-              <label>Keterangan (Opsional)</label>
+              <label>Keterangan</label>
               <Textarea placeholder="Cth: Diberikan obat anti-bloat oral" {...register('notes')} />
             </div>
             <Button type="submit">
