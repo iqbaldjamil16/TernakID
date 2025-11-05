@@ -99,7 +99,7 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
             {(selectedType === 'Vaksinasi' || selectedType === 'Pengobatan') && (
               <div>
                 <label>Jenis Obat/Vaksin</label>
-                <Input placeholder={selectedType === 'Vaksinasi' ? "Cth: PMK Dosis 2" : "Cth: Antibiotik X"} {...register('vaccineOrMedicineName')} />
+                <Input placeholder="Cth: PMK Dosis 2" {...register('vaccineOrMedicineName')} />
                 {errors.vaccineOrMedicineName && <p className="text-destructive text-sm mt-1">{errors.vaccineOrMedicineName.message}</p>}
               </div>
             )}
@@ -107,7 +107,7 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
             {selectedType === 'Penyakit' && (
               <div>
                 <label>Gejala/Diagnosa</label>
-                <Input placeholder="Cth: Diare, nafsu makan turun" {...register('diagnosis')} />
+                <Input placeholder="Cth : VetOxy La 5ml, Hematodin 3ml" {...register('diagnosis')} />
                  {errors.diagnosis && <p className="text-destructive text-sm mt-1">{errors.diagnosis.message}</p>}
               </div>
             )}
