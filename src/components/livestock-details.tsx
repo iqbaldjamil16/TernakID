@@ -72,7 +72,7 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
         <div className="bg-primary text-primary-foreground p-6 sm:p-8">
           <div className="flex items-center justify-between">
              <div className="flex items-center gap-2">
-              <SidebarTrigger className="md:hidden" />
+              <SidebarTrigger className="md:hidden size-9" />
               <h1 className="text-3xl font-bold">E-TernakID</h1>
             </div>
             <div className="flex items-center space-x-2">
@@ -88,7 +88,7 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
                 alt={`Foto ${animal.name}`}
                 width={400}
                 height={400}
-                className="w-48 h-48 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8"
+                className="w-56 h-56 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8"
                 data-ai-hint="livestock animal"
                 priority
               />
