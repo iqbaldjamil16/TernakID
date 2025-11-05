@@ -98,7 +98,7 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
             
             {(selectedType === 'Vaksinasi' || selectedType === 'Pengobatan') && (
               <div>
-                <label>Nama Vaksin / Obat</label>
+                <label>Jenis Obat/Vaksin</label>
                 <Input placeholder={selectedType === 'Vaksinasi' ? "Cth: PMK Dosis 2" : "Cth: Antibiotik X"} {...register('vaccineOrMedicineName')} />
                 {errors.vaccineOrMedicineName && <p className="text-destructive text-sm mt-1">{errors.vaccineOrMedicineName.message}</p>}
               </div>
