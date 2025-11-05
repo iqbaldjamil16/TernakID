@@ -23,9 +23,7 @@ const generateDefaultData = (id: string): Livestock => {
     owner: "Peternakan Jaya",
     address: `Kandang ${Math.ceil(idNumber / 10)}, Desa Makmur`,
     birthDate: birthDate,
-    healthLog: [
-      { date: new Date(birthDate.getTime() + 30 * 24 * 3600 * 1000), type: 'Vaksinasi', detail: 'Vaksinasi PMK Dosis 1', notes: 'Dosis 2ml' },
-    ],
+    healthLog: [],
     reproduction: {
       role: (idNumber % 2 === 0) ? "Pejantan" : "Indukan",
       semenQuality: (idNumber % 2 === 0) ? 'Baik' : 'N/A',
