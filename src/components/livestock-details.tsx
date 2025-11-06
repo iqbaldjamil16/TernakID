@@ -40,21 +40,21 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
 
   const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date'>) => {
     const newLog = { ...log, date: new Date() };
-    const optimisticLogs = [...currentAnimal.healthLog, newLog];
+    const optimisticLogs = [...(currentAnimal.healthLog || []), newLog];
     setCurrentAnimal(prev => ({...prev, healthLog: optimisticLogs}));
     await addHealthLog(currentAnimal.id, newLog);
   }, [currentAnimal]);
 
   const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'date'>) => {
     const newLog = { ...log, date: new Date() };
-    const optimisticLogs = [...currentAnimal.reproductionLog, newLog];
+    const optimisticLogs = [...(currentAnimal.reproductionLog || []), newLog];
     setCurrentAnimal(prev => ({...prev, reproductionLog: optimisticLogs}));
     await addReproductionLog(currentAnimal.id, newLog);
   }, [currentAnimal]);
 
   const handleAddGrowthRecord = useCallback(async (record: Omit<GrowthRecord, 'date' | 'adg'>) => {
     const newRecord = { ...record, date: new Date() };
-    const optimisticRecords = [...currentAnimal.growthRecords, newRecord];
+    const optimisticRecords = [...(currentAnimal.growthRecords || []), newRecord];
     setCurrentAnimal(prev => ({...prev, growthRecords: optimisticRecords}));
     await addGrowthRecord(currentAnimal.id, newRecord);
   }, [currentAnimal]);

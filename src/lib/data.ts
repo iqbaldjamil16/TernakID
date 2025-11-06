@@ -8,6 +8,8 @@ import {
   writeBatch,
   onSnapshot,
   runTransaction,
+  query,
+  limit,
 } from 'firebase/firestore';
 import { initializeFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from './types';
@@ -45,7 +47,8 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
 export async function createDefaultAnimals(count = 100) {
   try {
     const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
-    const snapshot = await getDocs(livestockCollectionRef);
+    const q = query(livestockCollectionRef, limit(1));
+    const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
       console.log('Database already has livestock data. Skipping creation.');
@@ -58,26 +61,32 @@ export async function createDefaultAnimals(count = 100) {
       const docId = `KIT-${String(i).padStart(3, '0')}`;
       const docRef = doc(firestore, LIVESTOCK_COLLECTION, docId);
       const animalData = generateDefaultData(i);
+      // Store the id within the document data as well for consistency
       batch.set(docRef, { ...animalData, id: docId });
     }
     await batch.commit();
     console.log(`${count} default animals created successfully.`);
   } catch (error) {
     console.error("Error creating default animals:", error);
+    // Here you might want to throw the error or handle it in a way
+    // that the UI can be notified. For now, just logging.
   }
 }
 
 export function listenToAnimals(callback: (animals: Livestock[]) => void): () => void {
   const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
   const unsubscribe = onSnapshot(livestockCollectionRef, (snapshot) => {
-    const animals = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      birthDate: doc.data().birthDate?.toDate ? doc.data().birthDate.toDate() : new Date(doc.data().birthDate),
-      healthLog: doc.data().healthLog.map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
-      reproductionLog: doc.data().reproductionLog.map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
-      growthRecords: doc.data().growthRecords.map((rec: any) => ({...rec, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
-    })) as Livestock[];
+    const animals = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            birthDate: data.birthDate?.toDate ? data.birthDate.toDate() : new Date(data.birthDate),
+            healthLog: (data.healthLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+            reproductionLog: (data.reproductionLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+            growthRecords: (data.growthRecords || []).map((rec: any) => ({...rec, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
+        } as Livestock;
+    });
     callback(animals);
   }, (serverError) => {
       const permissionError = new FirestorePermissionError({
