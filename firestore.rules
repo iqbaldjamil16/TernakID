@@ -6,9 +6,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Allow public read and write access to the 'livestock' collection
+    // Allow public read and write access to individual documents
     match /livestock/{livestockId} {
-      allow read, write: if true;
+      allow get, write: if true;
+    }
+
+    // Explicitly allow anyone to list the entire collection
+    match /livestock {
+      allow list: if true;
     }
   }
 }
