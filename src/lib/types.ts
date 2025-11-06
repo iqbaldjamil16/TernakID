@@ -21,22 +21,22 @@ export type GrowthRecord = {
 };
 
 export type Dam = {
-  name: string;
-  regId: string;
-  breed: string;
-  offspring: number;
+  name?: string;
+  regId?: string;
+  breed?: string;
+  offspring?: number;
 };
 
 export type Sire = {
-  name: string;
-  semenId: string;
-  breed: string;
-  characteristics: string;
+  name?: string;
+  semenId?: string;
+  breed?: string;
+  characteristics?: string;
 };
 
 export type Pedigree = {
-  dam: Dam;
-  sire: Sire;
+  dam?: Dam;
+  sire?: Sire;
 };
 
 export type Livestock = {
@@ -48,10 +48,10 @@ export type Livestock = {
   status: string;
   owner: string;
   address: string;
-  birthDate: Date | null;
+  birthDate: Date;
   photoUrl?: string;
   healthLog: HealthLog[];
   reproductionLog: ReproductionLog[];
   growthRecords: GrowthRecord[];
-  pedigree: Pedigree;
+  pedigree?: Pedigree;
 };

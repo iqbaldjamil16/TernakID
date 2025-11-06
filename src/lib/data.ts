@@ -9,7 +9,7 @@ import {
   getFirestore,
   onSnapshot,
 } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
+import { initializeFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from './types';
 
 const { firestore } = initializeFirebase();
@@ -77,7 +77,8 @@ export const getAnimalIds = async (): Promise<string[]> => {
 };
 
 export function listenToAnimals(callback: (animals: Livestock[]) => void): () => void {
-  const unsubscribe = onSnapshot(collection(firestore, LIVESTOCK_COLLECTION), (snapshot) => {
+  const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
+  const unsubscribe = onSnapshot(livestockCollectionRef, (snapshot) => {
     const animals = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -88,8 +89,14 @@ export function listenToAnimals(callback: (animals: Livestock[]) => void): () =>
       growthRecords: doc.data().growthRecords.map((rec: any) => ({...rec, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
     })) as Livestock[];
     callback(animals);
-  }, (error) => {
-    console.error("Error listening to animals collection:", error);
+  }, (serverError) => {
+      // Create the rich, contextual error asynchronously.
+      const permissionError = new FirestorePermissionError({
+        path: livestockCollectionRef.path,
+        operation: 'list',
+      });
+      // Emit the error with the global error emitter
+      errorEmitter.emit('permission-error', permissionError);
   });
   return unsubscribe;
 }
@@ -123,12 +130,15 @@ export const getAllAnimals = async (): Promise<Livestock[]> => {
 
 
 export const updateAnimal = async (id: string, updatedData: Partial<Livestock>): Promise<void> => {
-  try {
-    const docRef = doc(firestore, LIVESTOCK_COLLECTION, id);
-    await setDoc(docRef, updatedData, { merge: true });
-  } catch (error) {
-    console.error("Error updating animal: ", error);
-  }
+  const docRef = doc(firestore, LIVESTOCK_COLLECTION, id);
+  setDoc(docRef, updatedData, { merge: true }).catch(async (serverError) => {
+    const permissionError = new FirestorePermissionError({
+      path: docRef.path,
+      operation: 'update',
+      requestResourceData: updatedData,
+    });
+    errorEmitter.emit('permission-error', permissionError);
+  });
 };
 
 export const addHealthLog = async (animalId: string, newLog: HealthLog): Promise<void> => {
