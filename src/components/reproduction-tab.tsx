@@ -16,7 +16,6 @@ import { Save } from 'lucide-react';
 
 const reproductionLogSchema = z.object({
   type: z.enum(['Inseminasi Buatan (IB)', 'Kawin Alami', 'Kebuntingan Dideteksi', 'Melahirkan', 'Kelahiran', 'Abortus', 'Lainnya']),
-  date: z.string().min(1, 'Tanggal harus diisi'),
   detail: z.string().min(1, 'Detail harus diisi'),
   notes: z.string().optional(),
 });
@@ -25,7 +24,7 @@ type ReproductionLogFormData = z.infer<typeof reproductionLogSchema>;
 
 interface ReproductionTabProps {
   animal: Livestock;
-  onAddLog: (log: Omit<ReproductionLog, 'date'> & { date: string }) => void;
+  onAddLog: (log: Omit<ReproductionLog, 'date'>) => void;
 }
 
 export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
@@ -36,7 +35,7 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
   });
 
   const onSubmit = (data: ReproductionLogFormData) => {
-    onAddLog(data as Omit<ReproductionLog, 'date'> & { date: string });
+    onAddLog(data);
     toast({
       title: 'Sukses',
       description: 'Catatan reproduksi berhasil disimpan.',
@@ -76,10 +75,8 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
                   )}
                 />
               </div>
-              <div>
-                <label>Tanggal</label>
-                <Input type="date" {...register('date')} />
-                {errors.date && <p className="text-destructive text-sm mt-1">{errors.date.message}</p>}
+              <div className="flex flex-col justify-end">
+                <p className="text-sm text-muted-foreground">Tanggal akan dicatat otomatis.</p>
               </div>
             </div>
             <div>
@@ -137,3 +134,5 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
     </div>
   );
 }
+
+    

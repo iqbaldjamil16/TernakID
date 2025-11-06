@@ -1,8 +1,8 @@
 export type HealthLog = {
   date: Date;
-  type: 'Vaksinasi' | 'Penyakit' | 'Pengobatan' | 'Lainnya';
+  type: 'Vaksinasi' | 'Pengobatan' | 'Lainnya';
   vaccineOrMedicineName?: string;
-  detail?: string; // Re-adding for compatibility with existing data
+  detail?: string; 
   diagnosis?: string;
   notes?: string;
 };
@@ -55,3 +55,5 @@ export type Livestock = {
   growthRecords: GrowthRecord[];
   pedigree?: Pedigree;
 };
+
+    

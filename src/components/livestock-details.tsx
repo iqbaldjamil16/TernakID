@@ -3,9 +3,6 @@ import React, { useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import {
   updateAnimal,
-  addHealthLog,
-  addReproductionLog,
-  addGrowthRecord
 } from '@/lib/data';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from '@/lib/types';
 import { calculateAge } from '@/lib/utils';
@@ -38,15 +35,15 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     setIsModalOpen(false);
   }, [currentAnimal]);
 
-  const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date'> & {date: string}) => {
-    const newLog = { ...log, date: new Date(log.date) };
+  const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date'>) => {
+    const newLog = { ...log, date: new Date() };
     const updatedLogs = [...currentAnimal.healthLog, newLog];
     setCurrentAnimal(prev => ({...prev, healthLog: updatedLogs}));
     await updateAnimal(currentAnimal.id, { healthLog: updatedLogs });
   }, [currentAnimal]);
 
-  const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'date'> & {date: string}) => {
-    const newLog = { ...log, date: new Date(log.date) };
+  const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'date'>) => {
+    const newLog = { ...log, date: new Date() };
     const updatedLogs = [...currentAnimal.reproductionLog, newLog];
     setCurrentAnimal(prev => ({...prev, reproductionLog: updatedLogs}));
     await updateAnimal(currentAnimal.id, { reproductionLog: updatedLogs });
@@ -189,3 +186,5 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
+
+    

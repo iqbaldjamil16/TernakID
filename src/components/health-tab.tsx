@@ -16,7 +16,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 const healthLogSchema = z.object({
   type: z.enum(['Vaksinasi', 'Pengobatan', 'Lainnya']),
-  date: z.string().min(1, 'Tanggal harus diisi'),
   vaccineOrMedicineName: z.string().optional(),
   diagnosis: z.string().optional(),
   notes: z.string().optional(),
@@ -26,7 +25,7 @@ const healthLogSchema = z.object({
     }
     return true;
 }, {
-    message: "Detail harus diisi sesuai jenis catatan",
+    message: "Jenis Obat/Vaksin harus diisi untuk tipe Vaksinasi atau Pengobatan.",
     path: ['vaccineOrMedicineName'],
 });
 
@@ -34,7 +33,7 @@ type HealthLogFormData = z.infer<typeof healthLogSchema>;
 
 interface HealthTabProps {
   animal: Livestock;
-  onAddLog: (log: Omit<HealthLog, 'date'> & { date: string }) => void;
+  onAddLog: (log: Omit<HealthLog, 'date'>) => void;
 }
 
 export function HealthTab({ animal, onAddLog }: HealthTabProps) {
@@ -47,7 +46,7 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
   const selectedType = watch('type');
 
   const onSubmit = (data: HealthLogFormData) => {
-    onAddLog(data as Omit<HealthLog, 'date'> & { date: string });
+    onAddLog(data);
     toast({
       title: 'Sukses',
       description: 'Catatan kesehatan berhasil disimpan.',
@@ -85,10 +84,8 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
                   )}
                 />
               </div>
-              <div>
-                <label>Tanggal</label>
-                <Input type="date" {...register('date')} />
-                {errors.date && <p className="text-destructive text-sm mt-1">{errors.date.message}</p>}
+              <div className="flex flex-col justify-end">
+                <p className="text-sm text-muted-foreground">Tanggal akan dicatat otomatis.</p>
               </div>
             </div>
             
@@ -150,3 +147,4 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
     </div>
   );
 }
+    
