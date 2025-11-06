@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import {
   updateAnimal,
@@ -27,14 +27,22 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // If the animal prop from parent changes, update the state
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentAnimal(animal);
   }, [animal]);
 
   const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id'>>) => {
+    // Optimistic UI update
     const optimisticData = { ...currentAnimal, ...updatedData };
-    setCurrentAnimal(optimisticData); // Optimistic UI update
-    await updateAnimal(currentAnimal.id, updatedData);
+    setCurrentAnimal(optimisticData); 
+    
+    try {
+      await updateAnimal(currentAnimal.id, updatedData);
+    } catch (error) {
+      // If the update fails, revert to the original state
+      setCurrentAnimal(currentAnimal);
+    }
+    
     setIsModalOpen(false);
   }, [currentAnimal]);
 
@@ -125,7 +133,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 border-b bg-muted/30">
-          <InfoItem label="Tanggal Lahir" value={currentAnimal.birthDate ? currentAnimal.birthDate.toLocaleDateString('id-ID') : 'N/A'} />
+          <InfoItem label="Tanggal Lahir" value={currentAnimal.birthDate ? currentAnimal.birthDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'} />
           <InfoItem label="Usia" value={age} />
           <InfoItem label="Pemilik" value={currentAnimal.owner} />
           <InfoItem label="Alamat Peternakan" value={currentAnimal.address} />

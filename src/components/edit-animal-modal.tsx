@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,7 +30,7 @@ const editSchema = z.object({
   address: z.string().min(1, 'Alamat harus diisi'),
   owner: z.string().min(1, 'Nama pemilik harus diisi'),
   birthDate: z.string().min(1, 'Tanggal lahir harus diisi'),
-  photoUrl: z.string().optional().nullable(),
+  photoUrl: z.string().url().or(z.string().startsWith('data:image')).optional().nullable(),
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -47,7 +47,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
   const [photoPreview, setPhotoPreview] = useState<string | null>(animal.photoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm<EditFormData>({
+  const { control, register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       name: animal.name,
@@ -60,6 +60,22 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
       photoUrl: animal.photoUrl,
     },
   });
+
+  useEffect(() => {
+    // Reset form and photo preview when the animal prop changes
+    reset({
+      name: animal.name,
+      breed: animal.breed,
+      gender: animal.gender,
+      status: animal.status,
+      address: animal.address,
+      owner: animal.owner,
+      birthDate: formatToYYYYMMDD(animal.birthDate),
+      photoUrl: animal.photoUrl,
+    });
+    setPhotoPreview(animal.photoUrl || null);
+  }, [animal, reset]);
+
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
