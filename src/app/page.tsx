@@ -5,34 +5,28 @@ import LivestockSidebar from '@/components/livestock-sidebar';
 import LivestockDetails from '@/components/livestock-details';
 import { createDefaultAnimals, listenToAnimals } from '@/lib/data';
 import type { Livestock } from '@/lib/types';
-import { useUser } from '@/firebase';
 
 export default function Home() {
   const [allAnimals, setAllAnimals] = useState<Livestock[]>([]);
   const [selectedAnimalId, setSelectedAnimalId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPreparingData, setIsPreparingData] = useState(false);
-  const { user, isUserLoading } = useUser();
 
   useEffect(() => {
-    // We don't need to wait for auth anymore, just listen to data.
     const unsubscribe = listenToAnimals((animals) => {
       setAllAnimals(animals);
       setIsLoading(false);
       
       if (animals.length === 0 && !isPreparingData) {
-        // If there's no data, trigger the creation process.
         setIsPreparingData(true);
         createDefaultAnimals().finally(() => setIsPreparingData(false));
       } else if (animals.length > 0 && !selectedAnimalId) {
-        // If data exists, select the first animal by default.
         setSelectedAnimalId(animals[0].id);
       }
     });
 
-    // Cleanup listener on unmount
     return () => unsubscribe();
-  }, [selectedAnimalId, isPreparingData]); // Depend on selectedAnimalId and isPreparingData to re-evaluate defaults.
+  }, [selectedAnimalId, isPreparingData]);
 
   const handleSelectAnimal = useCallback((id: string) => {
     setSelectedAnimalId(id);
