@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogHeader } from '@/components/ui/dialog';
 import { Pencil } from 'lucide-react';
 import { HealthTab } from './health-tab';
 import { ReproductionTab } from './reproduction-tab';
@@ -104,7 +104,9 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 </div>
               </DialogTrigger>
               <DialogContent className="p-0 max-w-xl bg-transparent border-0">
-                <DialogTitle className="sr-only">Foto Ternak: {currentAnimal.name}</DialogTitle>
+                 <DialogHeader className="sr-only">
+                  <DialogTitle>Foto Ternak: {currentAnimal.name}</DialogTitle>
+                </DialogHeader>
                 <Image
                   src={photoSrc}
                   alt={`Foto ${currentAnimal.name}`}
@@ -196,3 +198,5 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
+
+    
