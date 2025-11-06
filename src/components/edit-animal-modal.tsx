@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Livestock } from '@/lib/types';
@@ -18,17 +18,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { Upload } from 'lucide-react';
 
 const editSchema = z.object({
   name: z.string().min(1, 'Nama ternak harus diisi'),
   breed: z.string().min(1, 'Jenis bangsa harus diisi'),
-  gender: z.enum(['Jantan', 'Betina']),
+  gender: z.enum(['Jantan', 'Betina'], { required_error: 'Jenis kelamin harus dipilih' }),
   status: z.string().min(1, 'Status harus diisi'),
   address: z.string().min(1, 'Alamat harus diisi'),
   owner: z.string().min(1, 'Nama pemilik harus diisi'),
   birthDate: z.string().min(1, 'Tanggal lahir harus diisi'),
+  photoUrl: z.string().url().optional().nullable(),
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -45,7 +47,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
   const [photoPreview, setPhotoPreview] = useState<string | null>(animal.photoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<EditFormData>({
+  const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       name: animal.name,
@@ -55,6 +57,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
       address: animal.address,
       owner: animal.owner,
       birthDate: formatToYYYYMMDD(animal.birthDate),
+      photoUrl: animal.photoUrl,
     },
   });
 
@@ -137,16 +140,27 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
               {errors.address && <p className="text-destructive text-sm mt-1">{errors.address.message}</p>}
             </div>
             <div>
-              <Label htmlFor="gender">Jenis Kelamin</Label>
-              <select
-                id="gender"
-                {...register('gender')}
-                defaultValue={animal.gender}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="Jantan">Jantan</option>
-                <option value="Betina">Betina</option>
-              </select>
+              <Label>Jenis Kelamin</Label>
+              <Controller
+                name="gender"
+                control={control}
+                render={({ field }) => (
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex items-center space-x-4 mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="Jantan" id="jantan" />
+                      <Label htmlFor="jantan">Jantan</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="Betina" id="betina" />
+                      <Label htmlFor="betina">Betina</Label>
+                    </div>
+                  </RadioGroup>
+                )}
+              />
               {errors.gender && <p className="text-destructive text-sm mt-1">{errors.gender.message}</p>}
             </div>
             <div>

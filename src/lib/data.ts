@@ -101,6 +101,7 @@ export function listenToAnimals(callback: (animals: Livestock[]) => void): () =>
 
 export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livestock, 'id'>>): Promise<void> => {
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, id);
+  // Use set with merge:true to avoid overwriting fields that are not in updatedData
   setDoc(docRef, updatedData, { merge: true }).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,

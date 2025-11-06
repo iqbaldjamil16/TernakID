@@ -13,34 +13,37 @@ export default function Home() {
   const [isPreparingData, setIsPreparingData] = useState(false);
 
   useEffect(() => {
-    // This flag helps prevent multiple calls to createDefaultAnimals
-    let isDataBeingPrepared = false;
-    
+    // This flag is local to the effect scope to prevent re-triggering data creation
+    // if the component re-renders for other reasons.
+    let isDataCreationInitiated = false;
+
     const unsubscribe = listenToAnimals((animals) => {
       setAllAnimals(animals);
       setIsLoading(false);
-
-      if (animals.length === 0 && !isDataBeingPrepared && !isPreparingData) {
-        isDataBeingPrepared = true;
-        setIsPreparingData(true);
+      
+      // If we receive an empty list and data creation hasn't started yet
+      if (animals.length === 0 && !isDataCreationInitiated) {
+        isDataCreationInitiated = true; // Mark as initiated
+        setIsPreparingData(true); // Set loading state for UI
         createDefaultAnimals().finally(() => {
-            // No need to set isPreparingData to false here, 
-            // the listener will re-fire with new data and handle it.
+           // No need to set isPreparingData to false, the listener will get the new data.
         });
       } else if (animals.length > 0) {
-        // If data is ready, stop showing the "preparing" message
+        // Data is present, so we are no longer preparing.
         if (isPreparingData) setIsPreparingData(false);
-        
-        // If no animal is selected, select the first one.
-        // Also handles the case right after initial data creation.
-        if (!selectedAnimalId) {
+
+        // Auto-select the first animal if none is selected, or if the selected one disappears.
+        if (!selectedAnimalId || !animals.some(a => a.id === selectedAnimalId)) {
           setSelectedAnimalId(animals[0].id);
         }
       }
     });
 
     return () => unsubscribe();
-  }, [selectedAnimalId, isPreparingData]); // Keep dependencies to avoid re-running unnecessarily
+     // The dependency array is intentionally sparse.
+     // We want the listener to set up only once.
+     // State updates inside the listener handle the dynamic parts.
+  }, [isPreparingData, selectedAnimalId]);
 
   const handleSelectAnimal = useCallback((id: string) => {
     setSelectedAnimalId(id);
