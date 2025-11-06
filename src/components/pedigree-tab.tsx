@@ -56,7 +56,16 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
   });
 
   const onSubmit = (data: PedigreeFormData) => {
-    onUpdate({ pedigree: data as Pedigree });
+    // Ensure empty number input becomes undefined, not NaN
+    const offspringAsNumber = Number(data.dam?.offspring);
+    const updatedData = {
+      ...data,
+      dam: {
+        ...data.dam,
+        offspring: isNaN(offspringAsNumber) || offspringAsNumber === 0 ? undefined : offspringAsNumber
+      }
+    };
+    onUpdate({ pedigree: updatedData as Pedigree });
     toast({
       title: 'Sukses',
       description: 'Data silsilah induk berhasil disimpan.',
@@ -120,7 +129,7 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Jumlah Kelahiran Anak</label>
-                  <Input type="number" {...register('dam.offspring', { setValueAs: (v) => (v === '' ? undefined : parseInt(v, 10)) })} placeholder="Cth: 3" />
+                  <Input type="number" {...register('dam.offspring', { setValueAs: (v) => v === "" ? undefined : parseInt(v) })} placeholder="Cth: 3" />
                 </div>
               </div>
 

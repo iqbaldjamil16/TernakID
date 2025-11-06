@@ -102,7 +102,7 @@ export function listenToAnimals(callback: (animals: Livestock[]) => void): () =>
 export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livestock, 'id'>>): Promise<void> => {
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, id);
   // Use set with merge:true to avoid overwriting fields that are not in updatedData
-  setDoc(docRef, updatedData, { merge: true }).catch(async (serverError) => {
+  return setDoc(docRef, updatedData, { merge: true }).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
       operation: 'update',
@@ -110,6 +110,8 @@ export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livesto
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
+    // Re-throw the error if you want calling code to be able to handle it too
+    throw permissionError;
   });
 };
 
@@ -133,6 +135,7 @@ export const addHealthLog = async (animalId: string, log: HealthLog): Promise<vo
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
   }
 };
 
@@ -156,6 +159,7 @@ export const addReproductionLog = async (animalId: string, log: ReproductionLog)
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
   }
 };
 
@@ -179,5 +183,6 @@ export const addGrowthRecord = async (animalId: string, record: GrowthRecord): P
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
   }
 };

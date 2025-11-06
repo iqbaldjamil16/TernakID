@@ -76,7 +76,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
     const updatedData: Partial<Omit<Livestock, 'id'>> = {
       ...data,
       birthDate: new Date(data.birthDate),
-      photoUrl: photoPreview || undefined,
+      photoUrl: photoPreview || animal.photoUrl, // Keep old photo if preview is null
     };
     onSave(updatedData);
     toast({
