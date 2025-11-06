@@ -1,116 +1,156 @@
-'use client'
+'use client';
 
-import { Livestock, HealthLog, ReproductionLog, GrowthRecord } from './types';
+import {
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  writeBatch,
+  getFirestore,
+  onSnapshot,
+} from 'firebase/firestore';
+import { initializeFirebase } from '@/firebase';
+import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from './types';
 
-const ANIMAL_COUNT = 100;
+const { firestore } = initializeFirebase();
+const LIVESTOCK_COLLECTION = 'livestock';
 
-// Use a Map to store the data in memory. This acts as our "database".
-const livestockDB = new Map<string, Livestock>();
-
-const generateDefaultData = (id: string): Livestock => {
-  const idNumber = parseInt(id.split('-')[1]);
+const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
   const birthDate = new Date(2023, 0, 1 + (idNumber % 30));
-  birthDate.setFullYear(birthDate.getFullYear() - (idNumber % 5)); // Vary age from 0-4 years
+  birthDate.setFullYear(birthDate.getFullYear() - (idNumber % 5));
 
   return {
-    id: id,
-    name: `Ternak ${id.split('-')[1]}`,
-    regId: id,
-    photoUrl: `https://picsum.photos/seed/${id}/400/400`,
+    name: `Ternak ${idNumber}`,
+    regId: `KIT-${String(idNumber).padStart(3, '0')}`,
+    photoUrl: `https://picsum.photos/seed/animal${idNumber}/400/400`,
     breed: (idNumber % 3 === 0) ? "Sapi Bali" : (idNumber % 3 === 1) ? "Sapi Ongole" : "Simental",
     gender: (idNumber % 2 === 0) ? "Jantan" : "Betina",
     status: (idNumber % 10 === 0) ? "Dijual" : "Produktif",
-    owner: "Peternakan Jaya",
-    address: `Kandang ${Math.ceil(idNumber / 10)}, Desa Makmur`,
+    owner: "Peternakan Bersama",
+    address: `Kandang Bersama, Desa Makmur`,
     birthDate: birthDate,
     healthLog: [],
-    reproduction: {
-      role: (idNumber % 2 === 0) ? "Pejantan" : "Indukan",
-      semenQuality: (idNumber % 2 === 0) ? 'Baik' : 'N/A',
-      semenTestDate: (idNumber % 2 === 0) ? new Date(2024, 4, 1) : null,
-      recentMatings: idNumber % 5,
-      successRate: (idNumber % 2 === 0) ? '85%' : 'N/A',
-    },
     reproductionLog: [],
     growthRecords: [
       { date: birthDate, weight: 30 + (idNumber % 10) },
       { date: new Date(birthDate.getTime() + 180 * 24 * 3600 * 1000), weight: 150 + (idNumber % 50) },
     ],
     pedigree: {
-      dam: { name: `Induk-${1000+idNumber}`, regId: `IND-${1000+idNumber}`, breed: "Sapi Bali", offspring: 2 },
-      sire: { name: `Pejantan-${2000+idNumber}`, semenId: `PJT-${2000+idNumber}`, breed: "Simental", characteristics: "Postur tinggi" },
+      dam: { name: `Induk-${1000 + idNumber}`, regId: `IND-${1000 + idNumber}`, breed: "Sapi Bali", offspring: 2 },
+      sire: { name: `Pejantan-${2000 + idNumber}`, semenId: `PJT-${2000 + idNumber}`, breed: "Simental", characteristics: "Postur tinggi" },
     }
   };
 };
 
-// --- Public API for data access ---
+export async function createDefaultAnimals(count = 100) {
+  try {
+    const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
+    const snapshot = await getDocs(livestockCollectionRef);
 
-// Initialize the database
-for (let i = 1; i <= ANIMAL_COUNT; i++) {
-  const id = `KIT-${String(i).padStart(2, '0')}`;
-  livestockDB.set(id, generateDefaultData(id));
-}
-
-export const getAnimalIds = (): string[] => {
-  return Array.from(livestockDB.keys());
-};
-
-export const getAnimal = (id: string): Livestock | undefined => {
-  // Return a deep copy to prevent direct mutation of the "database"
-  const animal = livestockDB.get(id);
-  return animal ? JSON.parse(JSON.stringify(animal), (key, value) => {
-    if (key.toLowerCase().includes('date') && value) {
-        return new Date(value);
+    if (!snapshot.empty) {
+      console.log('Database already has livestock data. Skipping creation.');
+      return;
     }
-    return value;
-  }) : undefined;
-};
 
-export const updateAnimal = (id: string, updatedData: Partial<Livestock>): Livestock | undefined => {
-  const currentData = livestockDB.get(id);
-  if (currentData) {
-    const newData: Livestock = { 
-        ...currentData, 
-        ...updatedData,
-        // Deep merge for nested objects
-        reproduction: { ...currentData.reproduction, ...updatedData.reproduction },
-        pedigree: {
-            dam: { ...currentData.pedigree.dam, ...updatedData.pedigree?.dam },
-            sire: { ...currentData.pedigree.sire, ...updatedData.pedigree?.sire },
-        }
-    };
-    livestockDB.set(id, newData);
-    return getAnimal(id); // Return a fresh copy
+    console.log('No livestock data found. Creating default set...');
+    const batch = writeBatch(firestore);
+    for (let i = 1; i <= count; i++) {
+      const docRef = doc(firestore, LIVESTOCK_COLLECTION, `KIT-${String(i).padStart(3, '0')}`);
+      const animalData = generateDefaultData(i);
+      batch.set(docRef, animalData);
+    }
+    await batch.commit();
+    console.log(`${count} default animals created successfully.`);
+  } catch (error) {
+    console.error("Error creating default animals:", error);
   }
-  return undefined;
+}
+
+export const getAnimalIds = async (): Promise<string[]> => {
+    try {
+        const snapshot = await getDocs(collection(firestore, LIVESTOCK_COLLECTION));
+        return snapshot.docs.map(doc => doc.id);
+    } catch (error) {
+        console.error("Error getting animal IDs: ", error);
+        return [];
+    }
 };
 
-export const addHealthLog = (animalId: string, newLog: HealthLog): Livestock | undefined => {
-    const animal = livestockDB.get(animalId);
-    if(animal) {
-        animal.healthLog.push(newLog);
-        livestockDB.set(animalId, animal);
-        return getAnimal(animalId);
-    }
-    return undefined;
+export function listenToAnimals(callback: (animals: Livestock[]) => void): () => void {
+  const unsubscribe = onSnapshot(collection(firestore, LIVESTOCK_COLLECTION), (snapshot) => {
+    const animals = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      // Ensure date fields are correctly parsed from Firestore Timestamps or strings
+      birthDate: doc.data().birthDate?.toDate ? doc.data().birthDate.toDate() : new Date(doc.data().birthDate),
+      healthLog: doc.data().healthLog.map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+      reproductionLog: doc.data().reproductionLog.map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+      growthRecords: doc.data().growthRecords.map((rec: any) => ({...rec, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
+    })) as Livestock[];
+    callback(animals);
+  }, (error) => {
+    console.error("Error listening to animals collection:", error);
+  });
+  return unsubscribe;
 }
 
-export const addReproductionLog = (animalId: string, newLog: ReproductionLog): Livestock | undefined => {
-    const animal = livestockDB.get(animalId);
-    if(animal) {
-        animal.reproductionLog.push(newLog);
-        livestockDB.set(animalId, animal);
-        return getAnimal(animalId);
+export const getAnimal = async (id: string): Promise<Livestock | undefined> => {
+  // This function might not be strictly necessary if all data is loaded at once,
+  // but it's good to keep for potential direct fetching.
+  const allAnimals = await getAllAnimals();
+  return allAnimals.find(animal => animal.id === id);
+};
+
+export const getAllAnimals = async (): Promise<Livestock[]> => {
+    try {
+        const snapshot = await getDocs(collection(firestore, LIVESTOCK_COLLECTION));
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                birthDate: data.birthDate?.toDate ? data.birthDate.toDate() : new Date(data.birthDate),
+                healthLog: data.healthLog.map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+                reproductionLog: data.reproductionLog.map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+                growthRecords: data.growthRecords.map((rec: any) => ({...rec, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
+            } as Livestock
+        });
+    } catch (error) {
+        console.error("Error getting all animals: ", error);
+        return [];
     }
-    return undefined;
 }
 
-export const addGrowthRecord = (animalId: string, newRecord: GrowthRecord): Livestock | undefined => {
-    const animal = livestockDB.get(animalId);
-    if(animal) {
-        animal.growthRecords.push(newRecord);
-        livestockDB.set(animalId, animal);
-        return getAnimal(animalId);
+
+export const updateAnimal = async (id: string, updatedData: Partial<Livestock>): Promise<void> => {
+  try {
+    const docRef = doc(firestore, LIVESTOCK_COLLECTION, id);
+    await setDoc(docRef, updatedData, { merge: true });
+  } catch (error) {
+    console.error("Error updating animal: ", error);
+  }
+};
+
+export const addHealthLog = async (animalId: string, newLog: HealthLog): Promise<void> => {
+    const animal = await getAnimal(animalId);
+    if (animal) {
+        const updatedLogs = [...animal.healthLog, newLog];
+        await updateAnimal(animalId, { healthLog: updatedLogs });
     }
-    return undefined;
+}
+
+export const addReproductionLog = async (animalId: string, newLog: ReproductionLog): Promise<void> => {
+    const animal = await getAnimal(animalId);
+    if (animal) {
+        const updatedLogs = [...animal.reproductionLog, newLog];
+        await updateAnimal(animalId, { reproductionLog: updatedLogs });
+    }
+}
+
+export const addGrowthRecord = async (animalId: string, newRecord: GrowthRecord): Promise<void> => {
+    const animal = await getAnimal(animalId);
+    if (animal) {
+        const updatedRecords = [...animal.growthRecords, newRecord];
+        await updateAnimal(animalId, { growthRecords: updatedRecords });
+    }
 }

@@ -10,7 +10,7 @@ import {
   SidebarInput,
 } from '@/components/ui/sidebar';
 import { SheetTitle } from '@/components/ui/sheet';
-import { Leaf, Search } from 'lucide-react';
+import { Leaf, Search, Loader } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import type { Livestock } from '@/lib/types';
 
@@ -18,9 +18,10 @@ type LivestockSidebarProps = {
   animals: Livestock[];
   selectedAnimalId: string | null;
   onSelect: (id: string) => void;
+  isPreparingData: boolean;
 };
 
-export default function LivestockSidebar({ animals, selectedAnimalId, onSelect }: LivestockSidebarProps) {
+export default function LivestockSidebar({ animals, selectedAnimalId, onSelect, isPreparingData }: LivestockSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredAnimals = useMemo(() => {
@@ -29,7 +30,7 @@ export default function LivestockSidebar({ animals, selectedAnimalId, onSelect }
     }
     return animals.filter((animal) =>
       animal.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      animal.id.toLowerCase().includes(searchTerm.toLowerCase())
+      animal.regId.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [animals, searchTerm]);
 
@@ -54,24 +55,30 @@ export default function LivestockSidebar({ animals, selectedAnimalId, onSelect }
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
+          {isPreparingData && (
+            <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
+                <Loader className="mr-2 h-4 w-4 animate-spin" />
+                Menyiapkan data...
+            </div>
+           )}
           {filteredAnimals.map((animal) => (
             <SidebarMenuItem key={animal.id}>
               <SidebarMenuButton
                 onClick={() => onSelect(animal.id)}
                 isActive={selectedAnimalId === animal.id}
-                tooltip={{ children: `${animal.name} (${animal.id})`, side: "right", align: "center" }}
+                tooltip={{ children: `${animal.name} (${animal.regId})`, side: "right", align: "center" }}
               >
                 {animal.name}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
-           {filteredAnimals.length === 0 && (
+           {filteredAnimals.length === 0 && !isPreparingData && (
             <p className="px-2 text-sm text-muted-foreground">Ternak tidak ditemukan.</p>
           )}
         </SidebarMenu>
       </SidebarContent>
        <SidebarFooter>
-        <p className="text-xs text-muted-foreground px-2">UserID: <span className="font-mono text-xs">user-12345</span></p>
+        <p className="text-xs text-muted-foreground px-2">Mode: Database Publik</p>
       </SidebarFooter>
     </Sidebar>
   );

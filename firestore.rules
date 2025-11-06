@@ -1,137 +1,14 @@
-/**
- * @file Firestore Security Rules for Ternak ID Application
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for livestock data. Each user has full control over their livestock and associated records.
- *
- * Data Structure:
- * Data is nested under /artifacts/{appId}/users/{userId}/livestock/{livestockId}, ensuring a clear ownership hierarchy.
- * HealthLog, Reproduction, GrowthRecord and Pedigree are stored as direct sub-fields within the livestock document.
- *
- * Key Security Decisions:
- * - Users can only access livestock data they own.
- * - Listing livestock is restricted to the owner.
- * - All write operations require a valid authenticated user.
- * - Data validation is limited to ensuring ownership integrity.
- *
- * Denormalization for Authorization:
- * The userId is embedded within the Livestock document itself, enabling ownership checks directly at the document level.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * @description Checks if the request is made by an authenticated user.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Requires authentication for all operations.
-     */
-    function isSignedIn() {
-      return request.auth != null;
+    // By default, deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces user ownership.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user owns the existing document.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Combines ownership and existence checks for safer destructive operations.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Defines the rules for livestock documents, enforcing user ownership.
-     * @path /artifacts/{appId}/users/{userId}/livestock/{livestockId}
-     * @allow (create) User 'user123' can create a livestock document under their user ID with userId field matching 'user123'.
-     * @deny (create) User 'user456' cannot create a livestock document under the user ID 'user123'.
-     * @principle Enforces document ownership for writes and restricts access to a user's own livestock data.
-     */
-    match /artifacts/{appId}/users/{userId}/livestock/{livestockId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Defines the rules for healthLog documents, enforcing user ownership.
-     * @path /artifacts/{appId}/users/{userId}/livestock/{livestockId}/healthLog/{healthLogId}
-     * @allow (create) User 'user123' can create a healthLog document under their livestock with the correct user and livestock IDs.
-     * @deny (create) User 'user456' cannot create a healthLog document, as they are not the owner of the livestock.
-     * @principle Enforces document ownership for writes and restricts access to a user's own healthLog data.
-     */
-    match /artifacts/{appId}/users/{userId}/livestock/{livestockId}/healthLog/{healthLogId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Defines the rules for reproduction documents, enforcing user ownership.
-     * @path /artifacts/{appId}/users/{userId}/livestock/{livestockId}/reproduction/{reproductionId}
-     * @allow (create) User 'user123' can create a reproduction document under their livestock with the correct user and livestock IDs.
-     * @deny (create) User 'user456' cannot create a reproduction document, as they are not the owner of the livestock.
-     * @principle Enforces document ownership for writes and restricts access to a user's own reproduction data.
-     */
-    match /artifacts/{appId}/users/{userId}/livestock/{livestockId}/reproduction/{reproductionId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Defines the rules for growthRecord documents, enforcing user ownership.
-     * @path /artifacts/{appId}/users/{userId}/livestock/{livestockId}/growthRecord/{growthRecordId}
-     * @allow (create) User 'user123' can create a growthRecord document under their livestock with the correct user and livestock IDs.
-     * @deny (create) User 'user456' cannot create a growthRecord document, as they are not the owner of the livestock.
-     * @principle Enforces document ownership for writes and restricts access to a user's own growthRecord data.
-     */
-    match /artifacts/{appId}/users/{userId}/livestock/{livestockId}/growthRecord/{growthRecordId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Defines the rules for pedigree documents, enforcing user ownership.
-     * @path /artifacts/{appId}/users/{userId}/livestock/{livestockId}/pedigree/{pedigreeId}
-     * @allow (create) User 'user123' can create a pedigree document under their livestock with the correct user and livestock IDs.
-     * @deny (create) User 'user456' cannot create a pedigree document, as they are not the owner of the livestock.
-     * @principle Enforces document ownership for writes and restricts access to a user's own pedigree data.
-     */
-    match /artifacts/{appId}/users/{userId}/livestock/{livestockId}/pedigree/{pedigreeId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+    // Allow public read and write access to the 'livestock' collection
+    match /livestock/{livestockId} {
+      allow read, write: if true;
     }
   }
 }

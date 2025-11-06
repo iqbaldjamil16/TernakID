@@ -1,14 +1,13 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import {
-  getAnimal,
   updateAnimal,
   addHealthLog,
   addReproductionLog,
   addGrowthRecord
 } from '@/lib/data';
-import type { Livestock, HealthLog, ReproductionLog, GrowthRecord, Pedigree } from '@/lib/types';
+import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from '@/lib/types';
 import { calculateAge } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,50 +22,49 @@ import { PedigreeTab } from './pedigree-tab';
 import EditAnimalModal from './edit-animal-modal';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
-export default function LivestockDetails({ animalId }: { animalId: string }) {
-  const [animal, setAnimal] = useState<Livestock | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function LivestockDetails({ animal }: { animal: Livestock }) {
+  const [currentAnimal, setCurrentAnimal] = useState<Livestock>(animal);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchAnimalData = useCallback(() => {
-    setLoading(true);
-    const data = getAnimal(animalId);
-    if (data) {
-      setAnimal(data);
-    }
-    setLoading(false);
-  }, [animalId]);
+  // If the animal prop from parent changes, update the state
+  React.useEffect(() => {
+    setCurrentAnimal(animal);
+  }, [animal]);
 
-  useEffect(() => {
-    fetchAnimalData();
-  }, [fetchAnimalData]);
-  
   const handleUpdate = useCallback(async (updatedData: Partial<Livestock>) => {
-    const updatedAnimal = updateAnimal(animalId, updatedData);
-    if(updatedAnimal) setAnimal(updatedAnimal);
-  }, [animalId]);
+    const optimisticData = { ...currentAnimal, ...updatedData };
+    setCurrentAnimal(optimisticData); // Optimistic UI update
+    await updateAnimal(currentAnimal.id, updatedData);
+    setIsModalOpen(false);
+  }, [currentAnimal]);
 
   const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date'> & {date: string}) => {
-    const newAnimal = addHealthLog(animalId, {...log, date: new Date(log.date)});
-    if(newAnimal) setAnimal(newAnimal);
-  }, [animalId]);
+    const newLog = { ...log, date: new Date(log.date) };
+    const updatedLogs = [...currentAnimal.healthLog, newLog];
+    setCurrentAnimal(prev => ({...prev, healthLog: updatedLogs}));
+    await updateAnimal(currentAnimal.id, { healthLog: updatedLogs });
+  }, [currentAnimal]);
 
   const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'date'> & {date: string}) => {
-    const newAnimal = addReproductionLog(animalId, {...log, date: new Date(log.date)});
-    if(newAnimal) setAnimal(newAnimal);
-  }, [animalId]);
+    const newLog = { ...log, date: new Date(log.date) };
+    const updatedLogs = [...currentAnimal.reproductionLog, newLog];
+    setCurrentAnimal(prev => ({...prev, reproductionLog: updatedLogs}));
+    await updateAnimal(currentAnimal.id, { reproductionLog: updatedLogs });
+  }, [currentAnimal]);
 
   const handleAddGrowthRecord = useCallback(async (record: Omit<GrowthRecord, 'date'>) => {
-    const newAnimal = addGrowthRecord(animalId, {...record, date: new Date()});
-    if(newAnimal) setAnimal(newAnimal);
-  }, [animalId]);
+    const newRecord = { ...record, date: new Date() };
+    const updatedRecords = [...currentAnimal.growthRecords, newRecord];
+    setCurrentAnimal(prev => ({...prev, growthRecords: updatedRecords}));
+    await updateAnimal(currentAnimal.id, { growthRecords: updatedRecords });
+  }, [currentAnimal]);
 
-  if (loading || !animal) {
+  if (!currentAnimal) {
     return <DetailsSkeleton />;
   }
 
-  const age = calculateAge(animal.birthDate);
-  const photoSrc = animal.photoUrl || `https://picsum.photos/seed/${animal.id}/400/400`;
+  const age = calculateAge(currentAnimal.birthDate);
+  const photoSrc = currentAnimal.photoUrl || `https://picsum.photos/seed/${currentAnimal.id}/400/400`;
 
   return (
     <>
@@ -78,7 +76,7 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
               <h1 className="text-3xl font-bold">E-TernakID</h1>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="bg-white text-primary hover:bg-white">{animal.status}</Badge>
+              <Badge variant="secondary" className="bg-white text-primary hover:bg-white">{currentAnimal.status}</Badge>
               <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
                 <Pencil className="mr-2 h-4 w-4" /> Edit
               </Button>
@@ -90,7 +88,7 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
                 <div className="w-56 h-56 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8 mx-auto sm:mx-0 cursor-pointer">
                   <Image
                       src={photoSrc}
-                      alt={`Foto ${animal.name}`}
+                      alt={`Foto ${currentAnimal.name}`}
                       width={400}
                       height={400}
                       className="rounded-full w-full h-full object-cover"
@@ -102,7 +100,7 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
               <DialogContent className="p-0 max-w-xl bg-transparent border-0">
                 <Image
                   src={photoSrc}
-                  alt={`Foto ${animal.name}`}
+                  alt={`Foto ${currentAnimal.name}`}
                   width={800}
                   height={800}
                   className="rounded-lg object-contain w-full h-full"
@@ -110,18 +108,18 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
               </DialogContent>
             </Dialog>
             <div className="sm:mt-8 text-center sm:text-left w-full">
-              <h2 className="text-3xl sm:text-4xl font-extrabold">{animal.name}</h2>
-              <p className="text-sm opacity-90">No. Registrasi: {animal.regId}</p>
-              <p className="text-lg font-semibold mt-1">{animal.breed}, {animal.gender}</p>
+              <h2 className="text-3xl sm:text-4xl font-extrabold">{currentAnimal.name}</h2>
+              <p className="text-sm opacity-90">No. Registrasi: {currentAnimal.regId}</p>
+              <p className="text-lg font-semibold mt-1">{currentAnimal.breed}, {currentAnimal.gender}</p>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 border-b bg-muted/30">
-          <InfoItem label="Tanggal Lahir" value={animal.birthDate ? animal.birthDate.toLocaleDateString('id-ID') : 'N/A'} />
+          <InfoItem label="Tanggal Lahir" value={currentAnimal.birthDate ? currentAnimal.birthDate.toLocaleDateString('id-ID') : 'N/A'} />
           <InfoItem label="Usia" value={age} />
-          <InfoItem label="Pemilik" value={animal.owner} />
-          <InfoItem label="Alamat Peternakan" value={animal.address} />
+          <InfoItem label="Pemilik" value={currentAnimal.owner} />
+          <InfoItem label="Alamat Peternakan" value={currentAnimal.address} />
         </div>
 
         <Tabs defaultValue="kesehatan" className="p-4 sm:p-6">
@@ -132,10 +130,10 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
             <TabsTrigger value="silsilah">Silsilah Induk</TabsTrigger>
           </TabsList>
           <div className="mt-4">
-            <TabsContent value="kesehatan"><HealthTab animal={animal} onAddLog={handleAddHealthLog} /></TabsContent>
-            <TabsContent value="reproduksi"><ReproductionTab animal={animal} onAddLog={handleAddReproductionLog} /></TabsContent>
-            <TabsContent value="pertumbuhan"><GrowthTab animal={animal} onAddRecord={handleAddGrowthRecord} /></TabsContent>
-            <TabsContent value="silsilah"><PedigreeTab animal={animal} onUpdate={handleUpdate} /></TabsContent>
+            <TabsContent value="kesehatan"><HealthTab animal={currentAnimal} onAddLog={handleAddHealthLog} /></TabsContent>
+            <TabsContent value="reproduksi"><ReproductionTab animal={currentAnimal} onAddLog={handleAddReproductionLog} /></TabsContent>
+            <TabsContent value="pertumbuhan"><GrowthTab animal={currentAnimal} onAddRecord={handleAddGrowthRecord} /></TabsContent>
+            <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdate} /></TabsContent>
           </div>
         </Tabs>
       </div>
@@ -143,7 +141,7 @@ export default function LivestockDetails({ animalId }: { animalId: string }) {
         <EditAnimalModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          animal={animal}
+          animal={currentAnimal}
           onSave={handleUpdate}
         />
       )}

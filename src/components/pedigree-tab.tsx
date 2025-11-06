@@ -41,16 +41,16 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
     resolver: zodResolver(pedigreeSchema),
     defaultValues: {
         dam: {
-            name: animal.pedigree.dam.name || '',
-            regId: animal.pedigree.dam.regId || '',
-            breed: animal.pedigree.dam.breed || '',
-            offspring: animal.pedigree.dam.offspring || 0,
+            name: animal.pedigree?.dam?.name || '',
+            regId: animal.pedigree?.dam?.regId || '',
+            breed: animal.pedigree?.dam?.breed || '',
+            offspring: animal.pedigree?.dam?.offspring || 0,
         },
         sire: {
-            name: animal.pedigree.sire.name || '',
-            semenId: animal.pedigree.sire.semenId || '',
-            breed: animal.pedigree.sire.breed || '',
-            characteristics: animal.pedigree.sire.characteristics || '',
+            name: animal.pedigree?.sire?.name || '',
+            semenId: animal.pedigree?.sire?.semenId || '',
+            breed: animal.pedigree?.sire?.breed || '',
+            characteristics: animal.pedigree?.sire?.characteristics || '',
         }
     }
   });
@@ -62,6 +62,9 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
       description: 'Data silsilah induk berhasil disimpan.',
     });
   };
+
+  const dam = animal.pedigree?.dam;
+  const sire = animal.pedigree?.sire;
 
   return (
     <div className="space-y-6">
@@ -75,19 +78,19 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
                 <div className="p-4 bg-pink-50 rounded-lg border border-pink-200">
                     <h3 className="font-bold text-pink-700 text-lg mb-2">Induk (Dam)</h3>
                     <ul className="text-sm space-y-1 text-gray-700">
-                        <li><span className="font-semibold">Nama:</span> {animal.pedigree.dam.name || '-'}</li>
-                        <li><span className="font-semibold">No. Reg:</span> {animal.pedigree.dam.regId || '-'}</li>
-                        <li><span className="font-semibold">Bangsa/Ras:</span> {animal.pedigree.dam.breed || '-'}</li>
-                        <li><span className="font-semibold">Jml Anak:</span> {animal.pedigree.dam.offspring ?? '-'}</li>
+                        <li><span className="font-semibold">Nama:</span> {dam?.name || '-'}</li>
+                        <li><span className="font-semibold">No. Reg:</span> {dam?.regId || '-'}</li>
+                        <li><span className="font-semibold">Bangsa/Ras:</span> {dam?.breed || '-'}</li>
+                        <li><span className="font-semibold">Jml Anak:</span> {dam?.offspring ?? '-'}</li>
                     </ul>
                 </div>
                 <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
                     <h3 className="font-bold text-indigo-700 text-lg mb-2">Pejantan (Sire)</h3>
                      <ul className="text-sm space-y-1 text-gray-700">
-                        <li><span className="font-semibold">Nama/Semen:</span> {animal.pedigree.sire.name || '-'}</li>
-                        <li><span className="font-semibold">No. Semen/ID:</span> {animal.pedigree.sire.semenId || '-'}</li>
-                        <li><span className="font-semibold">Bangsa/Ras:</span> {animal.pedigree.sire.breed || '-'}</li>
-                        <li><span className="font-semibold">Karakteristik:</span> {animal.pedigree.sire.characteristics || '-'}</li>
+                        <li><span className="font-semibold">Nama/Semen:</span> {sire?.name || '-'}</li>
+                        <li><span className="font-semibold">No. Semen/ID:</span> {sire?.semenId || '-'}</li>
+                        <li><span className="font-semibold">Bangsa/Ras:</span> {sire?.breed || '-'}</li>
+                        <li><span className="font-semibold">Karakteristik:</span> {sire?.characteristics || '-'}</li>
                     </ul>
                 </div>
             </div>

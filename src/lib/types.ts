@@ -39,14 +39,6 @@ export type Pedigree = {
   sire: Sire;
 };
 
-export type Reproduction = {
-    role: string;
-    semenQuality: string;
-    semenTestDate: Date | null;
-    recentMatings: number;
-    successRate: string;
-}
-
 export type Livestock = {
   id: string;
   name: string;
