@@ -34,10 +34,16 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
 
   const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id'>>) => {
     const optimisticData = { ...currentAnimal, ...updatedData };
-    setCurrentAnimal(optimisticData);
-    await updateAnimal(currentAnimal.id, updatedData);
+    setCurrentAnimal(optimisticData); // Optimistic update
+    try {
+        await updateAnimal(currentAnimal.id, updatedData);
+    } catch (error) {
+        console.error("Failed to update animal, rolling back UI", error);
+        setCurrentAnimal(currentAnimal); // Rollback on error
+    }
     setIsModalOpen(false);
   }, [currentAnimal]);
+
 
   const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date' | 'id'>) => {
     const newLog = { ...log, id: new Date().toISOString(), date: new Date() };
@@ -53,7 +59,6 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
   }, [currentAnimal]);
 
   const handleDeleteHealthLog = useCallback(async (log: HealthLog) => {
-    // For UI purposes, we need the full log object to find it in the original array for arrayRemove
     const logToDelete = (currentAnimal.healthLog || []).find(l => l.id === log.id);
     if (!logToDelete) return;
     
@@ -121,7 +126,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 </div>
               </DialogTrigger>
               <DialogContent className="p-0 max-w-xl bg-transparent border-0">
-                 <DialogHeader className="sr-only">
+                <DialogHeader className="sr-only">
                   <DialogTitle>Foto Ternak: {currentAnimal.name}</DialogTitle>
                 </DialogHeader>
                 <Image

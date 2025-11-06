@@ -13,11 +13,12 @@ import {
   updateDoc,
   arrayRemove,
   arrayUnion,
+  getFirestore,
 } from 'firebase/firestore';
 import { initializeFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from './types';
 
-const { firestore } = initializeFirebase();
+// Do not initialize here. Get the instance inside functions.
+// const { firestore } = initializeFirebase();
 const LIVESTOCK_COLLECTION = 'livestock';
 
 const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
@@ -48,6 +49,7 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
 };
 
 export async function createDefaultAnimals(count = 100) {
+  const firestore = getFirestore(initializeFirebase().firebaseApp);
   try {
     const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
     const q = query(livestockCollectionRef, limit(1));
@@ -77,6 +79,7 @@ export async function createDefaultAnimals(count = 100) {
 }
 
 export function listenToAnimals(callback: (animals: Livestock[]) => void): () => void {
+  const firestore = getFirestore(initializeFirebase().firebaseApp);
   const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
   const unsubscribe = onSnapshot(livestockCollectionRef, (snapshot) => {
     const animals = snapshot.docs.map(doc => {
@@ -103,6 +106,7 @@ export function listenToAnimals(callback: (animals: Livestock[]) => void): () =>
 }
 
 export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livestock, 'id'>>): Promise<void> => {
+  const firestore = getFirestore(initializeFirebase().firebaseApp);
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, id);
   return setDoc(docRef, updatedData, { merge: true }).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
@@ -117,6 +121,7 @@ export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livesto
 };
 
 export const addHealthLog = async (animalId: string, log: HealthLog): Promise<void> => {
+  const firestore = getFirestore(initializeFirebase().firebaseApp);
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
     await updateDoc(docRef, { healthLog: arrayUnion(log) });
@@ -134,6 +139,7 @@ export const addHealthLog = async (animalId: string, log: HealthLog): Promise<vo
 
 
 export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): Promise<void> => {
+  const firestore = getFirestore(initializeFirebase().firebaseApp);
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
     await runTransaction(firestore, async (transaction) => {
@@ -144,9 +150,11 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
       const currentLogs: HealthLog[] = animalDoc.data().healthLog || [];
       const logIndex = currentLogs.findIndex(log => log.id === updatedLog.id);
       if (logIndex === -1) {
-        throw "Log not found!";
+        // If log not found, just add it. This can happen with optimistic updates.
+        currentLogs.push(updatedLog);
+      } else {
+        currentLogs[logIndex] = updatedLog;
       }
-      currentLogs[logIndex] = updatedLog;
       transaction.update(docRef, { healthLog: currentLogs });
     });
   } catch (e) {
@@ -162,16 +170,26 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
 };
 
 export const deleteHealthLog = async (animalId: string, logToDelete: HealthLog): Promise<void> => {
+  const firestore = getFirestore(initializeFirebase().firebaseApp);
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
-    await updateDoc(docRef, {
-        healthLog: arrayRemove(logToDelete)
+    // To make arrayRemove work, we must pass an object that's an exact match.
+    // The logToDelete from the client might have a different Date object instance.
+    // So, we need to find the exact object in the database first.
+    await runTransaction(firestore, async (transaction) => {
+        const animalDoc = await transaction.get(docRef);
+        if (!animalDoc.exists()) {
+            throw "Document does not exist!";
+        }
+        const currentLogs: HealthLog[] = animalDoc.data().healthLog || [];
+        const logsToKeep = currentLogs.filter(log => log.id !== logToDelete.id);
+        transaction.update(docRef, { healthLog: logsToKeep });
     });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
       operation: 'update',
-      requestResourceData: { healthLog: [logToDelete] },
+      requestResourceData: { healthLog: arrayRemove(logToDelete) }, // This is an approximation for the error log
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
@@ -180,17 +198,10 @@ export const deleteHealthLog = async (animalId: string, logToDelete: HealthLog):
 };
 
 export const addReproductionLog = async (animalId: string, log: ReproductionLog): Promise<void> => {
+  const firestore = getFirestore(initializeFirebase().firebaseApp);
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
-    await runTransaction(firestore, async (transaction) => {
-      const animalDoc = await transaction.get(docRef);
-      if (!animalDoc.exists()) {
-        throw "Document does not exist!";
-      }
-      const currentLogs = animalDoc.data().reproductionLog || [];
-      const updatedLogs = [...currentLogs, log];
-      transaction.update(docRef, { reproductionLog: updatedLogs });
-    });
+     await updateDoc(docRef, { reproductionLog: arrayUnion(log) });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
@@ -204,17 +215,10 @@ export const addReproductionLog = async (animalId: string, log: ReproductionLog)
 };
 
 export const addGrowthRecord = async (animalId: string, record: GrowthRecord): Promise<void> => {
+  const firestore = getFirestore(initializeFirebase().firebaseApp);
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
-    await runTransaction(firestore, async (transaction) => {
-      const animalDoc = await transaction.get(docRef);
-      if (!animalDoc.exists()) {
-        throw "Document does not exist!";
-      }
-      const currentRecords = animalDoc.data().growthRecords || [];
-      const updatedRecords = [...currentRecords, record];
-      transaction.update(docRef, { growthRecords: updatedRecords });
-    });
+    await updateDoc(docRef, { growthRecords: arrayUnion(record) });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
