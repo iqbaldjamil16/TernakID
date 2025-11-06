@@ -1,4 +1,5 @@
 export type HealthLog = {
+  id: string; // Unique identifier
   date: Date;
   type: string;
   detail?: string;

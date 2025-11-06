@@ -4,6 +4,8 @@ import Image from 'next/image';
 import {
   updateAnimal,
   addHealthLog,
+  updateHealthLog,
+  deleteHealthLog,
   addReproductionLog,
   addGrowthRecord,
 } from '@/lib/data';
@@ -26,31 +28,38 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
   const [currentAnimal, setCurrentAnimal] = useState<Livestock>(animal);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // If the animal prop from parent changes, update the state
   useEffect(() => {
     setCurrentAnimal(animal);
   }, [animal]);
 
   const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id'>>) => {
-    // Optimistic UI update
     const optimisticData = { ...currentAnimal, ...updatedData };
-    setCurrentAnimal(optimisticData); 
-    
-    try {
-      await updateAnimal(currentAnimal.id, updatedData);
-    } catch (error) {
-      // If the update fails, revert to the original state
-      setCurrentAnimal(currentAnimal);
-    }
-    
+    setCurrentAnimal(optimisticData);
+    await updateAnimal(currentAnimal.id, updatedData);
     setIsModalOpen(false);
   }, [currentAnimal]);
 
-  const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date'>) => {
-    const newLog = { ...log, date: new Date() };
+  const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date' | 'id'>) => {
+    const newLog = { ...log, id: new Date().toISOString(), date: new Date() };
     const optimisticLogs = [...(currentAnimal.healthLog || []), newLog];
     setCurrentAnimal(prev => ({...prev, healthLog: optimisticLogs}));
     await addHealthLog(currentAnimal.id, newLog);
+  }, [currentAnimal]);
+  
+  const handleUpdateHealthLog = useCallback(async (log: HealthLog) => {
+    const optimisticLogs = (currentAnimal.healthLog || []).map(l => l.id === log.id ? log : l);
+    setCurrentAnimal(prev => ({...prev, healthLog: optimisticLogs}));
+    await updateHealthLog(currentAnimal.id, log);
+  }, [currentAnimal]);
+
+  const handleDeleteHealthLog = useCallback(async (log: HealthLog) => {
+    // For UI purposes, we need the full log object to find it in the original array for arrayRemove
+    const logToDelete = (currentAnimal.healthLog || []).find(l => l.id === log.id);
+    if (!logToDelete) return;
+    
+    const optimisticLogs = (currentAnimal.healthLog || []).filter(l => l.id !== log.id);
+    setCurrentAnimal(prev => ({...prev, healthLog: optimisticLogs}));
+    await deleteHealthLog(currentAnimal.id, logToDelete);
   }, [currentAnimal]);
 
   const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'date'>) => {
@@ -147,7 +156,14 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
             <TabsTrigger value="silsilah">Silsilah Induk</TabsTrigger>
           </TabsList>
           <div className="mt-4">
-            <TabsContent value="kesehatan"><HealthTab animal={currentAnimal} onAddLog={handleAddHealthLog} /></TabsContent>
+            <TabsContent value="kesehatan">
+              <HealthTab 
+                animal={currentAnimal} 
+                onAddLog={handleAddHealthLog} 
+                onUpdateLog={handleUpdateHealthLog}
+                onDeleteLog={handleDeleteHealthLog}
+              />
+            </TabsContent>
             <TabsContent value="reproduksi"><ReproductionTab animal={currentAnimal} onAddLog={handleAddReproductionLog} /></TabsContent>
             <TabsContent value="pertumbuhan"><GrowthTab animal={currentAnimal} onAddRecord={handleAddGrowthRecord} /></TabsContent>
             <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdatePedigree} /></TabsContent>
@@ -206,5 +222,3 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
-
-    

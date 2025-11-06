@@ -10,6 +10,9 @@ import {
   runTransaction,
   query,
   limit,
+  updateDoc,
+  arrayRemove,
+  arrayUnion,
 } from 'firebase/firestore';
 import { initializeFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from './types';
@@ -101,7 +104,6 @@ export function listenToAnimals(callback: (animals: Livestock[]) => void): () =>
 
 export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livestock, 'id'>>): Promise<void> => {
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, id);
-  // Use set with merge:true to avoid overwriting fields that are not in updatedData
   return setDoc(docRef, updatedData, { merge: true }).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
@@ -110,7 +112,6 @@ export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livesto
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
-    // Re-throw the error if you want calling code to be able to handle it too
     throw permissionError;
   });
 };
@@ -118,20 +119,59 @@ export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livesto
 export const addHealthLog = async (animalId: string, log: HealthLog): Promise<void> => {
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
-    await runTransaction(firestore, async (transaction) => {
-      const animalDoc = await transaction.get(docRef);
-      if (!animalDoc.exists()) {
-        throw "Document does not exist!";
-      }
-      const currentLogs = animalDoc.data().healthLog || [];
-      const updatedLogs = [...currentLogs, log];
-      transaction.update(docRef, { healthLog: updatedLogs });
-    });
+    await updateDoc(docRef, { healthLog: arrayUnion(log) });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
       operation: 'update',
       requestResourceData: { healthLog: [log] },
+    });
+    console.error(permissionError.message);
+    errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
+  }
+};
+
+
+export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): Promise<void> => {
+  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
+  try {
+    await runTransaction(firestore, async (transaction) => {
+      const animalDoc = await transaction.get(docRef);
+      if (!animalDoc.exists()) {
+        throw "Document does not exist!";
+      }
+      const currentLogs: HealthLog[] = animalDoc.data().healthLog || [];
+      const logIndex = currentLogs.findIndex(log => log.id === updatedLog.id);
+      if (logIndex === -1) {
+        throw "Log not found!";
+      }
+      currentLogs[logIndex] = updatedLog;
+      transaction.update(docRef, { healthLog: currentLogs });
+    });
+  } catch (e) {
+     const permissionError = new FirestorePermissionError({
+      path: docRef.path,
+      operation: 'update',
+      requestResourceData: { healthLog: [updatedLog] },
+    });
+    console.error(permissionError.message);
+    errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
+  }
+};
+
+export const deleteHealthLog = async (animalId: string, logToDelete: HealthLog): Promise<void> => {
+  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
+  try {
+    await updateDoc(docRef, {
+        healthLog: arrayRemove(logToDelete)
+    });
+  } catch (e) {
+    const permissionError = new FirestorePermissionError({
+      path: docRef.path,
+      operation: 'update',
+      requestResourceData: { healthLog: [logToDelete] },
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
