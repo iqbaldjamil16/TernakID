@@ -16,17 +16,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 const healthLogSchema = z.object({
   type: z.enum(['Vaksinasi', 'Pengobatan', 'Lainnya']),
-  vaccineOrMedicineName: z.string().optional(),
-  diagnosis: z.string().optional(),
+  detail: z.string().optional(),
   notes: z.string().optional(),
 }).refine(data => {
-    if ((data.type === 'Vaksinasi' || data.type === 'Pengobatan') && !data.vaccineOrMedicineName) {
+    if ((data.type === 'Vaksinasi' || data.type === 'Pengobatan') && (!data.detail || data.detail.trim() === '')) {
         return false;
     }
     return true;
 }, {
     message: "Jenis Obat/Vaksin harus diisi untuk tipe Vaksinasi atau Pengobatan.",
-    path: ['vaccineOrMedicineName'],
+    path: ['detail'],
 });
 
 type HealthLogFormData = z.infer<typeof healthLogSchema>;
@@ -40,13 +39,18 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
   const { toast } = useToast();
   const { register, handleSubmit, control, reset, watch, formState: { errors } } = useForm<HealthLogFormData>({
     resolver: zodResolver(healthLogSchema),
-    defaultValues: { type: 'Vaksinasi', notes: '', diagnosis: '', vaccineOrMedicineName: '' }
+    defaultValues: { type: 'Vaksinasi', notes: '', detail: '' }
   });
 
   const selectedType = watch('type');
 
   const onSubmit = (data: HealthLogFormData) => {
-    onAddLog(data);
+    const logData: Omit<HealthLog, 'date'> = {
+      type: data.type,
+      notes: data.notes,
+      detail: data.detail,
+    };
+    onAddLog(logData);
     toast({
       title: 'Sukses',
       description: 'Catatan kesehatan berhasil disimpan.',
@@ -92,8 +96,8 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
             {(selectedType === 'Vaksinasi' || selectedType === 'Pengobatan') && (
               <div>
                 <label>Jenis Obat/Vaksin</label>
-                <Input placeholder="Cth : VetOxy La 5ml, Hematodin 3ml" {...register('vaccineOrMedicineName')} />
-                {errors.vaccineOrMedicineName && <p className="text-destructive text-sm mt-1">{errors.vaccineOrMedicineName.message}</p>}
+                <Input placeholder="Cth : VetOxy La 5ml, Hematodin 3ml" {...register('detail')} />
+                {errors.detail && <p className="text-destructive text-sm mt-1">{errors.detail.message}</p>}
               </div>
             )}
             
@@ -129,7 +133,7 @@ export function HealthTab({ animal, onAddLog }: HealthTabProps) {
                   <TableRow key={index}>
                     <TableCell>{log.date.toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>{log.type}</TableCell>
-                    <TableCell>{log.vaccineOrMedicineName || log.detail || '-'}</TableCell>
+                    <TableCell>{log.detail || '-'}</TableCell>
                     <TableCell>{log.notes || '-'}</TableCell>
                   </TableRow>
                 )) : (

@@ -120,7 +120,7 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Jumlah Kelahiran Anak</label>
-                  <Input type="number" {...register('dam.offspring', { valueAsNumber: true, setValueAs: v => v || undefined })} placeholder="Cth: 3" />
+                  <Input type="number" {...register('dam.offspring', { setValueAs: (v) => (v === '' ? undefined : parseInt(v, 10)) })} placeholder="Cth: 3" />
                 </div>
               </div>
 

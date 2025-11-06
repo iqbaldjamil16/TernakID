@@ -31,15 +31,14 @@ export function GrowthTab({ animal, onAddRecord }: GrowthTabProps) {
   });
 
   const { average: avgADG, records: growthRecordsWithADG } = useMemo(() => calculateADG(animal.growthRecords), [animal.growthRecords]);
-  const latestWeight = growthRecordsWithADG.length > 0 ? growthRecordsWithADG[growthRecordsWithADG.length - 1].weight : 'N/A';
+  const latestWeight = growthRecordsWithADG.length > 0 ? growthRecordsWithADG[growthRecordsWithADG.length - 1].weight : 0;
 
   const onSubmit = (data: GrowthRecordFormData) => {
-    const latestRecordWeight = typeof latestWeight === 'number' ? latestWeight : 0;
-    if (data.weight <= latestRecordWeight) {
+    if (latestWeight > 0 && data.weight <= latestWeight) {
         toast({
             variant: "destructive",
-            title: "Error",
-            description: `Bobot harus lebih besar dari bobot terakhir (${latestRecordWeight} kg).`,
+            title: "Input Bobot Tidak Valid",
+            description: `Bobot baru harus lebih besar dari bobot terakhir (${latestWeight} kg).`,
         });
         return;
     }
@@ -74,7 +73,7 @@ export function GrowthTab({ animal, onAddRecord }: GrowthTabProps) {
       <Card className="bg-purple-50 border-purple-300">
         <CardHeader>
             <CardTitle className="text-purple-700">ADG (Average Daily Gain)</CardTitle>
-            <CardDescription>Bobot terakhir: <strong>{latestWeight} kg</strong></CardDescription>
+            <CardDescription>Bobot terakhir: <strong>{latestWeight > 0 ? `${latestWeight} kg` : 'N/A'}</strong></CardDescription>
         </CardHeader>
         <CardContent>
            <p className="text-2xl font-bold text-purple-700">{avgADG} kg/hari</p>
@@ -96,9 +95,9 @@ export function GrowthTab({ animal, onAddRecord }: GrowthTabProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {growthRecordsWithADG.length > 0 ? growthRecordsWithADG.reverse().map((record, index) => (
+                {growthRecordsWithADG.length > 0 ? [...growthRecordsWithADG].reverse().map((record, index) => (
                   <TableRow key={index}>
-                    <TableCell>{record.date.toLocaleDateString('id-ID')}</TableCell>
+                    <TableCell>{record.date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</TableCell>
                     <TableCell className="font-medium">{record.weight}</TableCell>
                     <TableCell>{record.adg}</TableCell>
                   </TableRow>

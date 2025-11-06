@@ -1,9 +1,7 @@
 export type HealthLog = {
   date: Date;
   type: string;
-  vaccineOrMedicineName?: string;
-  detail?: string; 
-  diagnosis?: string;
+  detail?: string;
   notes?: string;
 };
 
