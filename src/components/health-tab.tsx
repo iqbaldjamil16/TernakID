@@ -196,8 +196,8 @@ export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: Health
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedLog.length > 0 ? sortedLog.map((log) => (
-                  <TableRow key={log.id}>
+                {sortedLog.length > 0 ? sortedLog.map((log, index) => (
+                  <TableRow key={log.id || index}>
                     <TableCell>{log.date.toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>{log.type}</TableCell>
                     <TableCell>{log.detail || '-'}</TableCell>
