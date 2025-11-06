@@ -1,21 +1,23 @@
 {
   "entities": {
     "Livestock": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Livestock",
       "type": "object",
-      "description": "Represents a single livestock animal with its core identification and characteristics.",
+      "description": "Represents a single livestock animal with all its associated data.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the livestock animal (e.g., KIT-001)."
-        },
-        "regId": {
-          "type": "string",
-          "description": "Registration ID of the livestock animal."
+          "description": "Unique identifier for the livestock animal (e.g., KIT-01).",
+          "format": "uuid"
         },
         "name": {
           "type": "string",
           "description": "Name of the livestock animal."
+        },
+        "regId": {
+          "type": "string",
+          "description": "Registration ID of the livestock animal."
         },
         "breed": {
           "type": "string",
@@ -23,202 +25,331 @@
         },
         "gender": {
           "type": "string",
-          "enum": ["Jantan", "Betina"],
-          "description": "Gender of the livestock animal."
+          "description": "Gender of the livestock animal (e.g., Jantan, Betina)."
         },
         "status": {
           "type": "string",
-          "description": "Current status of the livestock animal (e.g., Productive, Dijual)."
+          "description": "Current status of the livestock animal (e.g., Produktif, Afkir)."
         },
         "owner": {
           "type": "string",
-          "description": "Name of the owner or farm."
+          "description": "Name of the owner of the livestock animal."
         },
         "address": {
           "type": "string",
-          "description": "Address of the farm."
+          "description": "Address of the farm or location where the livestock is kept."
         },
         "birthDate": {
           "type": "string",
-          "format": "date-time",
-          "description": "Date of birth of the livestock animal."
-        },
-        "photoUrl": {
-            "type": "string",
-            "format": "uri",
-            "description": "URL of the livestock's photo."
+          "description": "Date of birth of the livestock animal.",
+          "format": "date-time"
         },
         "healthLog": {
           "type": "array",
-          "description": "Array of health log entries.",
+          "description": "Array of health records for the livestock animal. (Relationship: Livestock 1:N HealthRecord)",
           "items": {
-            "$ref": "#/entities/HealthLog"
+            "type": "string"
           }
+        },
+        "reproduction": {
+          "type": "string",
+          "description": "Reference to the Reproduction data for the livestock animal. (Relationship: Livestock 1:1 Reproduction)",
+          "format": "uuid"
         },
         "reproductionLog": {
           "type": "array",
-          "description": "Array of reproduction log entries.",
+          "description": "Array of reproduction event records for the livestock animal. (Relationship: Livestock 1:N ReproductionRecord)",
           "items": {
-            "$ref": "#/entities/ReproductionLog"
+            "type": "string"
           }
         },
         "growthRecords": {
           "type": "array",
-          "description": "Array of growth measurement records.",
+          "description": "Array of growth records (weight measurements) for the livestock animal. (Relationship: Livestock 1:N GrowthRecord)",
           "items": {
-            "$ref": "#/entities/GrowthRecord"
+            "type": "string"
           }
         },
         "pedigree": {
-          "$ref": "#/entities/Pedigree"
+          "type": "string",
+          "description": "Reference to the Pedigree data for the livestock animal. (Relationship: Livestock 1:1 Pedigree)",
+          "format": "uuid"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User that owns the livestock. (Relationship: User 1:N Livestock)"
         }
       },
       "required": [
-        "regId",
+        "id",
         "name",
         "breed",
         "gender",
         "status",
         "owner",
-        "address",
         "birthDate"
       ]
     },
-    "HealthLog": {
-      "title": "HealthLog",
+    "HealthRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HealthRecord",
       "type": "object",
-      "description": "A single health log entry for a livestock animal.",
+      "description": "Represents a single health record entry for a livestock animal.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the health record."
+        },
+        "livestockId": {
+          "type": "string",
+          "description": "Reference to Livestock. (Relationship: Livestock 1:N HealthRecord)"
+        },
         "date": {
           "type": "string",
-          "format": "date-time",
-          "description": "Date of the health event."
+          "description": "Date of the health event.",
+          "format": "date-time"
         },
         "type": {
           "type": "string",
-          "enum": ["Vaksinasi", "Penyakit", "Pengobatan", "Lainnya"],
-          "description": "Type of health event."
-        },
-        "vaccineOrMedicineName": {
-            "type": "string"
+          "description": "Type of health event (e.g., Vaksinasi, Penyakit, Pengobatan)."
         },
         "detail": {
-            "type": "string"
-        },
-        "diagnosis": {
-            "type": "string"
+          "type": "string",
+          "description": "Details of the health event (e.g., PMK Dosis 2, Kembung Ringan)."
         },
         "notes": {
           "type": "string",
-          "description": "Additional notes about the event."
+          "description": "Additional notes about the health event (optional)."
         }
       },
-      "required": ["date", "type"]
+      "required": [
+        "id",
+        "livestockId",
+        "date",
+        "type",
+        "detail"
+      ]
     },
-    "ReproductionLog": {
-      "title": "ReproductionLog",
+    "Reproduction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Reproduction",
       "type": "object",
-      "description": "A single reproduction log entry.",
+      "description": "Represents reproduction-related information for a livestock animal.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the reproduction data."
+        },
+        "livestockId": {
+          "type": "string",
+          "description": "Reference to Livestock. (Relationship: Livestock 1:1 Reproduction)"
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the animal in breeding (e.g., Induk, Pejantan)."
+        },
+        "semenQuality": {
+          "type": "string",
+          "description": "Quality of semen (if applicable)."
+        },
+        "semenTestDate": {
+          "type": "string",
+          "description": "Date of the last semen test.",
+          "format": "date-time"
+        },
+        "recentMatings": {
+          "type": "number",
+          "description": "Number of recent matings (last 3 months)."
+        },
+        "successRate": {
+          "type": "string",
+          "description": "Success rate of matings (Semen/Bunting)."
+        }
+      },
+      "required": [
+        "id",
+        "livestockId"
+      ]
+    },
+    "ReproductionRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ReproductionRecord",
+      "type": "object",
+      "description": "Represents a single reproduction event record for a livestock animal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the reproduction record."
+        },
+        "livestockId": {
+          "type": "string",
+          "description": "Reference to Livestock. (Relationship: Livestock 1:N ReproductionRecord)"
+        },
         "date": {
           "type": "string",
-          "format": "date-time",
-          "description": "Date of the reproduction event."
+          "description": "Date of the reproduction event.",
+          "format": "date-time"
         },
         "type": {
           "type": "string",
-          "enum": ["Inseminasi Buatan (IB)", "Kawin Alami", "Kebuntingan Dideteksi", "Melahirkan", "Kelahiran", "Abortus", "Lainnya"],
-          "description": "Type of reproduction event."
+          "description": "Type of reproduction event (e.g., Inseminasi Buatan (IB), Melahirkan)."
         },
         "detail": {
           "type": "string",
-          "description": "Details of the event (e.g., Semen ID, Offspring name)."
+          "description": "Details of the reproduction event (e.g., Semen ID: IB-05-BCX, Kebuntingan 3 Bulan)."
         },
         "notes": {
           "type": "string",
-          "description": "Additional notes."
+          "description": "Additional notes about the reproduction event (optional)."
         }
       },
-      "required": ["date", "type", "detail"]
+      "required": [
+        "id",
+        "livestockId",
+        "date",
+        "type",
+        "detail"
+      ]
     },
     "GrowthRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "GrowthRecord",
       "type": "object",
-      "description": "A single growth record entry.",
+      "description": "Represents a single growth record (weight measurement) for a livestock animal.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the growth record."
+        },
+        "livestockId": {
+          "type": "string",
+          "description": "Reference to Livestock. (Relationship: Livestock 1:N GrowthRecord)"
+        },
         "date": {
           "type": "string",
-          "format": "date-time",
-          "description": "Date of the weight measurement."
+          "description": "Date of the weight measurement.",
+          "format": "date-time"
         },
         "weight": {
           "type": "number",
           "description": "Weight of the animal in kilograms."
-        },
-        "adg": {
-            "type": "string",
-            "description": "Average Daily Gain at the time of record."
         }
       },
-      "required": ["date", "weight"]
+      "required": [
+        "id",
+        "livestockId",
+        "date",
+        "weight"
+      ]
     },
     "Pedigree": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Pedigree",
       "type": "object",
-      "description": "Pedigree information for a livestock animal.",
+      "description": "Represents pedigree information (parents) for a livestock animal.",
       "properties": {
-        "dam": {
-          "$ref": "#/entities/Dam"
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the pedigree data."
         },
-        "sire": {
-          "$ref": "#/entities/Sire"
+        "livestockId": {
+          "type": "string",
+          "description": "Reference to Livestock. (Relationship: Livestock 1:1 Pedigree)"
+        },
+        "damName": {
+          "type": "string",
+          "description": "Name of the dam (mother)."
+        },
+        "damRegId": {
+          "type": "string",
+          "description": "Registration ID of the dam."
+        },
+        "damBreed": {
+          "type": "string",
+          "description": "Breed of the dam."
+        },
+        "damOffspring": {
+          "type": "number",
+          "description": "Number of offspring the dam has had."
+        },
+        "sireName": {
+          "type": "string",
+          "description": "Name of the sire (father)."
+        },
+        "sireSemenId": {
+          "type": "string",
+          "description": "Semen ID of the sire (if artificial insemination was used)."
+        },
+        "sireBreed": {
+          "type": "string",
+          "description": "Breed of the sire."
+        },
+        "sireCharacteristics": {
+          "type": "string",
+          "description": "Key characteristics of the sire."
         }
       },
-      "required": ["dam", "sire"]
+      "required": [
+        "id",
+        "livestockId"
+      ]
     },
-    "Dam": {
-        "title": "Dam",
-        "type": "object",
-        "properties": {
-            "name": {"type": "string"},
-            "regId": {"type": "string"},
-            "breed": {"type": "string"},
-            "offspring": {"type": "number"}
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "livestockIds": {
+          "type": "array",
+          "description": "References to the livestock owned by this user. (Relationship: User 1:N Livestock)",
+          "items": {
+            "type": "string"
+          }
         }
-    },
-    "Sire": {
-        "title": "Sire",
-        "type": "object",
-        "properties": {
-            "name": {"type": "string"},
-            "semenId": {"type": "string"},
-            "breed": {"type": "string"},
-            "characteristics": {"type": "string"}
-        }
+      },
+      "required": [
+        "id"
+      ]
     }
   },
   "auth": {
-    "providers": []
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
     "structure": [
       {
-        "path": "livestock/{livestockId}",
+        "path": "/artifacts/{appId}/users/{userId}/livestock/{livestockId}",
         "definition": {
           "entityName": "Livestock",
           "schema": {
-            "$ref": "#/entities/Livestock"
+            "$ref": "#/backend/entities/Livestock"
           },
-          "description": "Stores all livestock data in a single public collection.",
+          "description": "Stores livestock data. The livestockId is the livestock's unique identifier (e.g., KIT-01). Includes denormalized userId for authorization independence.",
           "params": [
             {
+              "name": "appId",
+              "description": "The unique identifier for the application."
+            },
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to the Firebase Auth UID."
+            },
+            {
               "name": "livestockId",
-              "description": "The unique identifier for the livestock animal."
+              "description": "The unique identifier for the livestock (e.g., KIT-01)."
             }
           ]
         }
       }
     ],
-    "reasoning": "This Firestore structure is designed for a fully public, single-database application. All data is stored in a top-level 'livestock' collection. There is no user-specific data separation, allowing any user to read and write to the same dataset. Security rules are set to public (`allow read, write: if true;`) for this collection, reflecting the collaborative nature of the app. This model is simple and ideal for public-facing collaborative applications where data ownership is not a concern."
+    "reasoning": "The Firestore structure is designed to provide a scalable and secure solution for managing livestock data. By leveraging path-based ownership and denormalization, the structure minimizes the need for complex security rules and ensures data integrity. The structure uses a top-level `artifacts` collection to store data related to different apps, and then uses the `appId` to separate data. Under each app, data is further organized by `users` and their associated `livestock`. Health, Reproduction, Growth and Pedigree data are stored directly within the Livestock document to ensure Authorization Independence and enable atomic operations.\n\n**Authorization Independence:** The design avoids `get()` calls in security rules by denormalizing the required authorization context. The `Livestock` documents are stored under `/artifacts/{appId}/users/{userId}/livestock/{livestockId}`, ensuring path-based ownership. All authorization checks can be performed based on `request.auth.uid` and the document path without needing to fetch additional data. Subcollections are avoided to prevent reliance on parent documents for authorization.\n\n**QAPs Support:** The structure is optimized for secure `list` operations by using path-based ownership. Security rules can easily enforce that a user can only list livestock documents under their own `/artifacts/{appId}/users/{userId}/livestock` path, preventing unauthorized access to other users' data. By storing all related data within the Livestock document, querying and filtering can be performed efficiently without requiring complex joins or subqueries."
   }
 }

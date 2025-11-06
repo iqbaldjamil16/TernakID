@@ -1,9 +1,57 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for livestock data within a multi-tenant application structure.
+ *
+ * Data Structure:
+ * All livestock data is nested under /artifacts/{appId}/users/{userId}/livestock/{livestockId}, ensuring a clear ownership hierarchy.
+ *
+ * Key Security Decisions:
+ * - Users can only access livestock data that they own.
+ * - Data related to livestock (HealthRecord, Reproduction, GrowthRecord, Pedigree) is stored directly within the Livestock document for authorization independence.
+ * - Listing of livestock is restricted to the owner of the livestock.
+ *
+ * Denormalization for Authorization:
+ * The `userId` is implicitly denormalized into the path /artifacts/{appId}/users/{userId}/livestock/{livestockId}, allowing direct enforcement of ownership without `get()` calls. The livestockId is also implicitly denormalized into the path for the livestock document.
+ *
+ * Structural Segregation:
+ * This ruleset assumes that all livestock data is private and specific to a user. There are no public collections.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read and write access to the livestock collection
-    match /livestock/{livestockId=**} {
-      allow read, write: if true;
+
+    /**
+     * @description Grants access to livestock data based on path-based ownership. Only the owner can create, read, update, or delete their livestock data.
+     * @path /artifacts/{appId}/users/{userId}/livestock/{livestockId}
+     * @allow (create) User with UID 'user123' can create a livestock document at /artifacts/app1/users/user123/livestock/livestock001.
+     * @allow (get) User with UID 'user123' can read a livestock document at /artifacts/app1/users/user123/livestock/livestock001.
+     * @allow (update) User with UID 'user123' can update a livestock document at /artifacts/app1/users/user123/livestock/livestock001.
+     * @allow (delete) User with UID 'user123' can delete a livestock document at /artifacts/app1/users/user123/livestock/livestock001.
+     * @deny (create) User with UID 'user456' cannot create a livestock document at /artifacts/app1/users/user123/livestock/livestock001 (mismatched user ID).
+     * @deny (get) User with UID 'user456' cannot read a livestock document at /artifacts/app1/users/user123/livestock/livestock001 (mismatched user ID).
+     * @principle Enforces document ownership for all operations.
+     */
+    match /artifacts/{appId}/users/{userId}/livestock/{livestockId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Helper function to check if the user is the owner of the document
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Helper function to check if the user is the owner of the existing document
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == livestockId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
