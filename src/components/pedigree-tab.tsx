@@ -44,7 +44,7 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
             name: animal.pedigree?.dam?.name || '',
             regId: animal.pedigree?.dam?.regId || '',
             breed: animal.pedigree?.dam?.breed || '',
-            offspring: animal.pedigree?.dam?.offspring || 0,
+            offspring: animal.pedigree?.dam?.offspring || undefined,
         },
         sire: {
             name: animal.pedigree?.sire?.name || '',
@@ -120,7 +120,7 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Jumlah Kelahiran Anak</label>
-                  <Input type="number" {...register('dam.offspring', { valueAsNumber: true })} placeholder="Cth: 3" />
+                  <Input type="number" {...register('dam.offspring', { valueAsNumber: true, setValueAs: v => v || undefined })} placeholder="Cth: 3" />
                 </div>
               </div>
 

@@ -3,8 +3,11 @@ import React, { useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import {
   updateAnimal,
+  addHealthLog,
+  addReproductionLog,
+  addGrowthRecord,
 } from '@/lib/data';
-import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from '@/lib/types';
+import type { Livestock, HealthLog, ReproductionLog, GrowthRecord, Pedigree } from '@/lib/types';
 import { calculateAge } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +31,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     setCurrentAnimal(animal);
   }, [animal]);
 
-  const handleUpdate = useCallback(async (updatedData: Partial<Livestock>) => {
+  const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id'>>) => {
     const optimisticData = { ...currentAnimal, ...updatedData };
     setCurrentAnimal(optimisticData); // Optimistic UI update
     await updateAnimal(currentAnimal.id, updatedData);
@@ -37,23 +40,29 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
 
   const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date'>) => {
     const newLog = { ...log, date: new Date() };
-    const updatedLogs = [...currentAnimal.healthLog, newLog];
-    setCurrentAnimal(prev => ({...prev, healthLog: updatedLogs}));
-    await updateAnimal(currentAnimal.id, { healthLog: updatedLogs });
+    const optimisticLogs = [...currentAnimal.healthLog, newLog];
+    setCurrentAnimal(prev => ({...prev, healthLog: optimisticLogs}));
+    await addHealthLog(currentAnimal.id, newLog);
   }, [currentAnimal]);
 
   const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'date'>) => {
     const newLog = { ...log, date: new Date() };
-    const updatedLogs = [...currentAnimal.reproductionLog, newLog];
-    setCurrentAnimal(prev => ({...prev, reproductionLog: updatedLogs}));
-    await updateAnimal(currentAnimal.id, { reproductionLog: updatedLogs });
+    const optimisticLogs = [...currentAnimal.reproductionLog, newLog];
+    setCurrentAnimal(prev => ({...prev, reproductionLog: optimisticLogs}));
+    await addReproductionLog(currentAnimal.id, newLog);
   }, [currentAnimal]);
 
-  const handleAddGrowthRecord = useCallback(async (record: Omit<GrowthRecord, 'date'>) => {
+  const handleAddGrowthRecord = useCallback(async (record: Omit<GrowthRecord, 'date' | 'adg'>) => {
     const newRecord = { ...record, date: new Date() };
-    const updatedRecords = [...currentAnimal.growthRecords, newRecord];
-    setCurrentAnimal(prev => ({...prev, growthRecords: updatedRecords}));
-    await updateAnimal(currentAnimal.id, { growthRecords: updatedRecords });
+    const optimisticRecords = [...currentAnimal.growthRecords, newRecord];
+    setCurrentAnimal(prev => ({...prev, growthRecords: optimisticRecords}));
+    await addGrowthRecord(currentAnimal.id, newRecord);
+  }, [currentAnimal]);
+  
+  const handleUpdatePedigree = useCallback(async (data: { pedigree: Pedigree }) => {
+    const optimisticData = { ...currentAnimal, pedigree: data.pedigree };
+    setCurrentAnimal(optimisticData);
+    await updateAnimal(currentAnimal.id, { pedigree: data.pedigree });
   }, [currentAnimal]);
 
   if (!currentAnimal) {
@@ -130,7 +139,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
             <TabsContent value="kesehatan"><HealthTab animal={currentAnimal} onAddLog={handleAddHealthLog} /></TabsContent>
             <TabsContent value="reproduksi"><ReproductionTab animal={currentAnimal} onAddLog={handleAddReproductionLog} /></TabsContent>
             <TabsContent value="pertumbuhan"><GrowthTab animal={currentAnimal} onAddRecord={handleAddGrowthRecord} /></TabsContent>
-            <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdate} /></TabsContent>
+            <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdatePedigree} /></TabsContent>
           </div>
         </Tabs>
       </div>
@@ -186,5 +195,3 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
-
-    

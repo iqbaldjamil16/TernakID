@@ -37,7 +37,7 @@ interface EditAnimalModalProps {
   isOpen: boolean;
   onClose: () => void;
   animal: Livestock;
-  onSave: (data: Partial<Livestock>) => void;
+  onSave: (data: Partial<Omit<Livestock, 'id'>>) => void;
 }
 
 export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: EditAnimalModalProps) {
@@ -70,7 +70,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
   };
 
   const onSubmit = (data: EditFormData) => {
-    const updatedData: Partial<Livestock> = {
+    const updatedData: Partial<Omit<Livestock, 'id'>> = {
       ...data,
       birthDate: new Date(data.birthDate),
       photoUrl: photoPreview || undefined,

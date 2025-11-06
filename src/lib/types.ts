@@ -1,6 +1,6 @@
 export type HealthLog = {
   date: Date;
-  type: 'Vaksinasi' | 'Pengobatan' | 'Lainnya';
+  type: string;
   vaccineOrMedicineName?: string;
   detail?: string; 
   diagnosis?: string;
@@ -9,7 +9,7 @@ export type HealthLog = {
 
 export type ReproductionLog = {
   date: Date;
-  type: 'Inseminasi Buatan (IB)' | 'Kawin Alami' | 'Kebuntingan Dideteksi' | 'Melahirkan' | 'Kelahiran' | 'Abortus' | 'Lainnya';
+  type: string;
   detail: string;
   notes?: string;
 };
@@ -55,5 +55,3 @@ export type Livestock = {
   growthRecords: GrowthRecord[];
   pedigree?: Pedigree;
 };
-
-    
