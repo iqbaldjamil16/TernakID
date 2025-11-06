@@ -30,7 +30,7 @@ const editSchema = z.object({
   address: z.string().min(1, 'Alamat harus diisi'),
   owner: z.string().min(1, 'Nama pemilik harus diisi'),
   birthDate: z.string().min(1, 'Tanggal lahir harus diisi'),
-  photoUrl: z.string().url().optional().nullable(),
+  photoUrl: z.string().optional().nullable(),
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -76,7 +76,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
     const updatedData: Partial<Omit<Livestock, 'id'>> = {
       ...data,
       birthDate: new Date(data.birthDate),
-      photoUrl: photoPreview || animal.photoUrl, // Keep old photo if preview is null
+      photoUrl: photoPreview, // Always use the preview, which is either the new Data URI or the original URL
     };
     onSave(updatedData);
     toast({
