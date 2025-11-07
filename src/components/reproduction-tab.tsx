@@ -1,18 +1,37 @@
 'use client'
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ReproductionLog } from '@/lib/types';
+import { ReproductionLog, Livestock } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Save } from 'lucide-react';
+import { Save, Pencil, Trash2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { formatToYYYYMMDD } from '@/lib/utils';
 
 const reproductionLogSchema = z.object({
@@ -27,11 +46,16 @@ type ReproductionLogFormData = z.infer<typeof reproductionLogSchema>;
 interface ReproductionTabProps {
   animal: Livestock;
   onAddLog: (log: Omit<ReproductionLog, 'id'>) => void;
+  onUpdateLog: (log: ReproductionLog) => void;
+  onDeleteLog: (log: ReproductionLog) => void;
 }
 
-export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
+export function ReproductionTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: ReproductionTabProps) {
   const { toast } = useToast();
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<ReproductionLogFormData>({
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingLog, setEditingLog] = useState<ReproductionLog | null>(null);
+
+  const { control: addFormControl, register: addFormRegister, handleSubmit: handleAddSubmit, reset: resetAddForm, formState: { errors: addFormErrors } } = useForm<ReproductionLogFormData>({
     resolver: zodResolver(reproductionLogSchema),
     defaultValues: {
       date: formatToYYYYMMDD(new Date()),
@@ -41,7 +65,22 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
     }
   });
 
-  const onSubmit = (data: ReproductionLogFormData) => {
+  const { control: editFormControl, register: editFormRegister, handleSubmit: handleEditSubmit, reset: resetEditForm, formState: { errors: editFormErrors } } = useForm<ReproductionLogFormData>({
+    resolver: zodResolver(reproductionLogSchema),
+  });
+
+  useEffect(() => {
+    if (editingLog) {
+      resetEditForm({
+        type: editingLog.type as any,
+        detail: editingLog.detail,
+        notes: editingLog.notes,
+        date: formatToYYYYMMDD(editingLog.date),
+      });
+    }
+  }, [editingLog, resetEditForm]);
+
+  const onAddSubmit = (data: ReproductionLogFormData) => {
     const newLog = {
       ...data,
       date: new Date(data.date),
@@ -51,13 +90,43 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
       title: 'Sukses',
       description: 'Catatan reproduksi berhasil disimpan.',
     });
-    reset({
+    resetAddForm({
         date: formatToYYYYMMDD(new Date()),
         type: 'Inseminasi Buatan (IB)',
         notes: '',
         detail: '',
     });
   };
+
+  const onEditSubmit = (data: ReproductionLogFormData) => {
+    if (!editingLog) return;
+    const updatedLog = {
+      ...editingLog,
+      ...data,
+      date: new Date(data.date),
+    };
+    onUpdateLog(updatedLog);
+    toast({
+      title: 'Sukses',
+      description: 'Catatan reproduksi berhasil diperbarui.',
+    });
+    setIsEditModalOpen(false);
+    setEditingLog(null);
+  };
+  
+  const openEditModal = (log: ReproductionLog) => {
+    setEditingLog(log);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (log: ReproductionLog) => {
+    onDeleteLog(log);
+    toast({
+      variant: 'destructive',
+      title: 'Dihapus',
+      description: 'Catatan reproduksi telah dihapus.',
+    });
+  }
   
   const sortedLog = [...animal.reproductionLog].sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -68,13 +137,13 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
           <CardTitle>Tambah Catatan Reproduksi Baru</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleAddSubmit(onAddSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label>Jenis Peristiwa</label>
                 <Controller
                   name="type"
-                  control={control}
+                  control={addFormControl}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <SelectTrigger><SelectValue placeholder="Pilih Jenis" /></SelectTrigger>
@@ -93,18 +162,18 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
               </div>
               <div>
                 <label>Tanggal</label>
-                <Input type="date" {...register('date')} />
-                {errors.date && <p className="text-destructive text-sm mt-1">{errors.date.message}</p>}
+                <Input type="date" {...addFormRegister('date')} />
+                {addFormErrors.date && <p className="text-destructive text-sm mt-1">{addFormErrors.date.message}</p>}
               </div>
             </div>
             <div>
               <label>Detail (ID Batch & Pejantan/Hasil PKB/Nama Anak dll)</label>
-              <Input placeholder="Cth: Semen ID: IB-05-BCX" {...register('detail')} />
-              {errors.detail && <p className="text-destructive text-sm mt-1">{errors.detail.message}</p>}
+              <Input placeholder="Cth: Semen ID: IB-05-BCX" {...addFormRegister('detail')} />
+              {addFormErrors.detail && <p className="text-destructive text-sm mt-1">{addFormErrors.detail.message}</p>}
             </div>
             <div>
               <label>Keterangan (Opsional)</label>
-              <Textarea placeholder="Cth: Birahi malam, IB sukses dilakukan pagi hari." {...register('notes')} />
+              <Textarea placeholder="Cth: Birahi malam, IB sukses dilakukan pagi hari." {...addFormRegister('notes')} />
             </div>
             <Button type="submit">
               <Save className="mr-2 h-4 w-4" />
@@ -127,19 +196,46 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
                   <TableHead>Peristiwa</TableHead>
                   <TableHead>Detail</TableHead>
                   <TableHead>Keterangan</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sortedLog.length > 0 ? sortedLog.map((log, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={log.id || index}>
                     <TableCell>{log.date.toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>{log.type}</TableCell>
                     <TableCell>{log.detail}</TableCell>
                     <TableCell>{log.notes || '-'}</TableCell>
+                    <TableCell className="text-right">
+                       <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => openEditModal(log)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                         <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Anda yakin?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tindakan ini tidak dapat diurungkan. Ini akan menghapus catatan reproduksi secara permanen.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Batal</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(log)}>Hapus</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                       </div>
+                    </TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       Belum ada riwayat reproduksi.
                     </TableCell>
                   </TableRow>
@@ -149,6 +245,65 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Catatan Reproduksi</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit(onEditSubmit)} className="space-y-4 py-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label>Jenis Peristiwa</label>
+                <Controller
+                  name="type"
+                  control={editFormControl}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Jenis" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Inseminasi Buatan (IB)">Inseminasi Buatan (IB)</SelectItem>
+                        <SelectItem value="Kawin Alami">Kawin Alami</SelectItem>
+                        <SelectItem value="Kebuntingan Dideteksi">Kebuntingan Dideteksi</SelectItem>
+                        <SelectItem value="Melahirkan">Melahirkan</SelectItem>
+                        <SelectItem value="Kelahiran">Kelahiran</SelectItem>
+                        <SelectItem value="Abortus">Abortus</SelectItem>
+                        <SelectItem value="Lainnya">Lainnya</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+               <div>
+                  <label>Tanggal</label>
+                  <Input
+                    type="date"
+                    {...editFormRegister('date')}
+                  />
+                  {editFormErrors.date && <p className="text-destructive text-sm mt-1">{editFormErrors.date.message}</p>}
+                </div>
+            </div>
+             <div>
+              <label>Detail (ID Batch & Pejantan/Hasil PKB/Nama Anak dll)</label>
+              <Input placeholder="Cth: Semen ID: IB-05-BCX" {...editFormRegister('detail')} />
+              {editFormErrors.detail && <p className="text-destructive text-sm mt-1">{editFormErrors.detail.message}</p>}
+            </div>
+             <div>
+              <label>Keterangan (Opsional)</label>
+              <Textarea placeholder="Cth: Birahi malam, IB sukses dilakukan pagi hari." {...editFormRegister('notes')} />
+            </div>
+             <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">Batal</Button>
+              </DialogClose>
+              <Button type="submit">Simpan Perubahan</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

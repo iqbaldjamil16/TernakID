@@ -7,6 +7,8 @@ import {
   updateHealthLog,
   deleteHealthLog,
   addReproductionLog,
+  updateReproductionLog,
+  deleteReproductionLog,
   addGrowthRecord,
   updateAnimalPhoto,
 } from '@/lib/data';
@@ -72,6 +74,16 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
   const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'id'>) => {
     await addReproductionLog(currentAnimal.id, log);
      // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
+  
+  const handleUpdateReproductionLog = useCallback(async (log: ReproductionLog) => {
+    await updateReproductionLog(currentAnimal.id, log);
+    // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
+
+  const handleDeleteReproductionLog = useCallback(async (log: ReproductionLog) => {
+    await deleteReproductionLog(currentAnimal.id, log);
+    // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
   const handleAddGrowthRecord = useCallback(async (record: Omit<GrowthRecord, 'date' | 'adg'>) => {
@@ -173,7 +185,14 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 onDeleteLog={handleDeleteHealthLog}
               />
             </TabsContent>
-            <TabsContent value="reproduksi"><ReproductionTab animal={currentAnimal} onAddLog={handleAddReproductionLog} /></TabsContent>
+            <TabsContent value="reproduksi">
+              <ReproductionTab 
+                animal={currentAnimal} 
+                onAddLog={handleAddReproductionLog}
+                onUpdateLog={handleUpdateReproductionLog}
+                onDeleteLog={handleDeleteReproductionLog}
+              />
+            </TabsContent>
             <TabsContent value="pertumbuhan"><GrowthTab animal={currentAnimal} onRecordAdded={handleAddGrowthRecord} /></TabsContent>
             <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdatePedigree} /></TabsContent>
           </div>
@@ -232,3 +251,5 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
+
+    
