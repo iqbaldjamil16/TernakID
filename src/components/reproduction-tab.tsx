@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Pencil, Trash2 } from 'lucide-react';
+import { Save, Pencil } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,17 +21,6 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { formatToYYYYMMDD } from '@/lib/utils';
 
 const reproductionLogSchema = z.object({
@@ -47,10 +36,9 @@ interface ReproductionTabProps {
   animal: Livestock;
   onAddLog: (log: Omit<ReproductionLog, 'id'>) => void;
   onUpdateLog: (log: ReproductionLog) => void;
-  onDeleteLog: (log: ReproductionLog) => void;
 }
 
-export function ReproductionTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: ReproductionTabProps) {
+export function ReproductionTab({ animal, onAddLog, onUpdateLog }: ReproductionTabProps) {
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<ReproductionLog | null>(null);
@@ -118,15 +106,6 @@ export function ReproductionTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: 
     setEditingLog(log);
     setIsEditModalOpen(true);
   };
-
-  const handleDelete = (log: ReproductionLog) => {
-    onDeleteLog(log);
-    toast({
-      variant: 'destructive',
-      title: 'Dihapus',
-      description: 'Catatan reproduksi telah dihapus.',
-    });
-  }
   
   const sortedLog = [...animal.reproductionLog].sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -211,25 +190,6 @@ export function ReproductionTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: 
                         <Button variant="ghost" size="icon" onClick={() => openEditModal(log)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Anda yakin?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tindakan ini tidak dapat diurungkan. Ini akan menghapus catatan reproduksi secara permanen.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(log)}>Hapus</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                        </div>
                     </TableCell>
                   </TableRow>
@@ -308,4 +268,5 @@ export function ReproductionTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: 
   );
 }
 
+    
     

@@ -7,7 +7,6 @@ import {
   updateHealthLog,
   addReproductionLog,
   updateReproductionLog,
-  deleteReproductionLog,
   addGrowthRecord,
   updateGrowthRecord,
   deleteGrowthRecord,
@@ -73,11 +72,6 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
   
   const handleUpdateReproductionLog = useCallback(async (log: ReproductionLog) => {
     await updateReproductionLog(currentAnimal.id, log);
-    // Data will be re-fetched by the listener
-  }, [currentAnimal.id]);
-
-  const handleDeleteReproductionLog = useCallback(async (log: ReproductionLog) => {
-    await deleteReproductionLog(currentAnimal.id, log);
     // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
@@ -193,7 +187,6 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddLog={handleAddReproductionLog}
                 onUpdateLog={handleUpdateReproductionLog}
-                onDeleteLog={handleDeleteReproductionLog}
               />
             </TabsContent>
             <TabsContent value="pertumbuhan">
@@ -262,4 +255,5 @@ const DetailsSkeleton = () => (
     </div>
 )
 
+    
     

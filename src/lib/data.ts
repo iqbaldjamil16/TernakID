@@ -53,7 +53,7 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
 export async function createDefaultAnimals(count = 100) {
   const { firestore } = initializeFirebase();
   try {
-    const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
+    const livestockCollectionRef = collection(firestore, LIVESTOCK_COLlection);
     const q = query(livestockCollectionRef, limit(1));
     const snapshot = await getDocs(q);
 
@@ -237,24 +237,6 @@ export const updateReproductionLog = async (animalId: string, updatedLog: Reprod
   }
 };
 
-export const deleteReproductionLog = async (animalId: string, logToDelete: ReproductionLog): Promise<void> => {
-  const { firestore } = initializeFirebase();
-  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
-  try {
-    await updateDoc(docRef, { reproductionLog: arrayRemove(logToDelete) });
-  } catch (e) {
-    const permissionError = new FirestorePermissionError({
-      path: docRef.path,
-      operation: 'update',
-      requestResourceData: { reproductionLog: [] }, // Approximation for the error log
-    });
-    console.error(permissionError.message);
-    errorEmitter.emit('permission-error', permissionError);
-    throw permissionError;
-  }
-};
-
-
 export const addGrowthRecord = async (animalId: string, record: Omit<GrowthRecord, 'id' | 'adg'>): Promise<void> => {
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
@@ -360,3 +342,5 @@ export const deleteGrowthRecord = async (animalId: string, recordToDelete: Growt
     throw permissionError;
   }
 };
+
+    
