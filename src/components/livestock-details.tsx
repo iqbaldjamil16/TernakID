@@ -10,7 +10,6 @@ import {
   addGrowthRecord,
   updateGrowthRecord,
   updateAnimalPhoto,
-  deleteHealthLog,
 } from '@/lib/data';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord, Pedigree } from '@/lib/types';
 import { calculateAge } from '@/lib/utils';
@@ -65,11 +64,6 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
-  const handleDeleteHealthLog = useCallback(async (logId: string) => {
-    await deleteHealthLog(currentAnimal.id, logId);
-    // Data will be re-fetched by the listener
-  }, [currentAnimal.id]);
-
   const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'id'>) => {
     await addReproductionLog(currentAnimal.id, log);
      // Data will be re-fetched by the listener
@@ -108,7 +102,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
         <div className="bg-primary text-primary-foreground p-6 sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="flex-shrink-0" />
+              <SidebarTrigger />
               <h1 className="text-3xl font-bold">E-TernakID</h1>
             </div>
             <div className="hidden sm:flex items-center gap-4 flex-shrink-0">
@@ -180,7 +174,6 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddLog={handleAddHealthLog} 
                 onUpdateLog={handleUpdateHealthLog}
-                onDeleteLog={handleDeleteHealthLog}
               />
             </TabsContent>
             <TabsContent value="reproduksi">
@@ -254,6 +247,3 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
-
-    
-    

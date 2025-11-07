@@ -34,7 +34,7 @@ const healthLogSchema = z.object({
     }
     return true;
 }, {
-    message: "Jenis Obat/Vaksin/Vitamin harus diisi.",
+    message: "Terapi harus diisi untuk jenis catatan ini.",
     path: ['detail'],
 });
 
@@ -44,10 +44,9 @@ interface HealthTabProps {
   animal: Livestock;
   onAddLog: (log: Omit<HealthLog, 'id'>) => void;
   onUpdateLog: (log: HealthLog) => void;
-  onDeleteLog: (logId: string) => void;
 }
 
-export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: HealthTabProps) {
+export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<HealthLog | null>(null);

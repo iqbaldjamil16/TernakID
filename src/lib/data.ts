@@ -91,13 +91,14 @@ export function listenToAnimals(callback: (animals: Livestock[]) => void): () =>
   const unsubscribe = onSnapshot(livestockCollectionRef, (snapshot) => {
     const animals = snapshot.docs.map(doc => {
         const data = doc.data();
+        const now = Date.now();
         return {
             id: doc.id,
             ...data,
             birthDate: data.birthDate?.toDate ? data.birthDate.toDate() : new Date(data.birthDate),
-            healthLog: (data.healthLog || []).map((log: any, index: number) => ({...log, id: log.id || `hl_${Date.now()}_${index}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
-            reproductionLog: (data.reproductionLog || []).map((log: any, index: number) => ({...log, id: log.id || `rl_${Date.now()}_${index}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
-            growthRecords: (data.growthRecords || []).map((rec: any, index: number) => ({...rec, id: rec.id || `gr_${Date.now()}_${index}`, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
+            healthLog: (data.healthLog || []).map((log: any, index: number) => ({...log, id: log.id || `hl_${now}_${index}_${Math.random()}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+            reproductionLog: (data.reproductionLog || []).map((log: any, index: number) => ({...log, id: log.id || `rl_${now}_${index}_${Math.random()}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+            growthRecords: (data.growthRecords || []).map((rec: any, index: number) => ({...rec, id: rec.id || `gr_${now}_${index}_${Math.random()}`, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
         } as Livestock;
     });
     callback(animals);
@@ -191,31 +192,6 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
   }
 };
 
-export const deleteHealthLog = async (animalId: string, logId: string): Promise<void> => {
-  const { firestore } = initializeFirebase();
-  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
-  try {
-    await runTransaction(firestore, async (transaction) => {
-      const animalDoc = await transaction.get(docRef);
-      if (!animalDoc.exists()) {
-        throw "Document does not exist!";
-      }
-      const currentLogs: HealthLog[] = (animalDoc.data().healthLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)}));
-      const updatedLogs = currentLogs.filter(log => log.id !== logId);
-      transaction.update(docRef, { healthLog: updatedLogs });
-    });
-  } catch (e) {
-     const permissionError = new FirestorePermissionError({
-      path: docRef.path,
-      operation: 'update',
-      requestResourceData: { healthLog: [] }, // Approximate resource
-    });
-    console.error(permissionError.message);
-    errorEmitter.emit('permission-error', permissionError);
-    throw permissionError;
-  }
-};
-
 export const addReproductionLog = async (animalId: string, log: Omit<ReproductionLog, 'id'>): Promise<void> => {
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
@@ -256,31 +232,6 @@ export const updateReproductionLog = async (animalId: string, updatedLog: Reprod
       path: docRef.path,
       operation: 'update',
       requestResourceData: { reproductionLog: [updatedLog] },
-    });
-    console.error(permissionError.message);
-    errorEmitter.emit('permission-error', permissionError);
-    throw permissionError;
-  }
-};
-
-export const deleteReproductionLog = async (animalId: string, logId: string): Promise<void> => {
-  const { firestore } = initializeFirebase();
-  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
-  try {
-    await runTransaction(firestore, async (transaction) => {
-      const animalDoc = await transaction.get(docRef);
-      if (!animalDoc.exists()) {
-        throw "Document does not exist!";
-      }
-      const currentLogs: ReproductionLog[] = (animalDoc.data().reproductionLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)}));
-      const updatedLogs = currentLogs.filter(log => log.id !== logId);
-      transaction.update(docRef, { reproductionLog: updatedLogs });
-    });
-  } catch (e) {
-     const permissionError = new FirestorePermissionError({
-      path: docRef.path,
-      operation: 'update',
-      requestResourceData: { reproductionLog: [] },
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
@@ -331,31 +282,6 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
       path: docRef.path,
       operation: 'update',
       requestResourceData: { growthRecords: [updatedRecord] },
-    });
-    console.error(permissionError.message);
-    errorEmitter.emit('permission-error', permissionError);
-    throw permissionError;
-  }
-};
-
-export const deleteGrowthRecord = async (animalId: string, recordId: string): Promise<void> => {
-  const { firestore } = initializeFirebase();
-  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
-  try {
-    await runTransaction(firestore, async (transaction) => {
-      const animalDoc = await transaction.get(docRef);
-      if (!animalDoc.exists()) {
-        throw "Document does not exist!";
-      }
-      const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({...rec, id: rec.id || `gr_${rec.date.toMillis()}`, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)}));
-      const updatedRecords = currentRecords.filter(rec => rec.id !== recordId);
-      transaction.update(docRef, { growthRecords: updatedRecords });
-    });
-  } catch (e) {
-     const permissionError = new FirestorePermissionError({
-      path: docRef.path,
-      operation: 'update',
-      requestResourceData: { growthRecords: [] },
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
