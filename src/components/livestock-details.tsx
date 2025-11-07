@@ -10,6 +10,9 @@ import {
   addGrowthRecord,
   updateGrowthRecord,
   updateAnimalPhoto,
+  deleteHealthLog,
+  deleteReproductionLog,
+  deleteGrowthRecord,
 } from '@/lib/data';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord, Pedigree } from '@/lib/types';
 import { calculateAge } from '@/lib/utils';
@@ -64,6 +67,11 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
+  const handleDeleteHealthLog = useCallback(async (logId: string) => {
+    await deleteHealthLog(currentAnimal.id, logId);
+    // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
+
   const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'id'>) => {
     await addReproductionLog(currentAnimal.id, log);
      // Data will be re-fetched by the listener
@@ -74,6 +82,11 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
+  const handleDeleteReproductionLog = useCallback(async (logId: string) => {
+    await deleteReproductionLog(currentAnimal.id, logId);
+    // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
+
   const handleAddGrowthRecord = useCallback(async (record: Omit<GrowthRecord, 'id' | 'adg'>) => {
     await addGrowthRecord(currentAnimal.id, record);
      // Data will be re-fetched by the listener
@@ -81,6 +94,11 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
 
   const handleUpdateGrowthRecord = useCallback(async (record: GrowthRecord) => {
     await updateGrowthRecord(currentAnimal.id, record);
+    // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
+
+  const handleDeleteGrowthRecord = useCallback(async (recordId: string) => {
+    await deleteGrowthRecord(currentAnimal.id, recordId);
     // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
@@ -174,6 +192,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddLog={handleAddHealthLog} 
                 onUpdateLog={handleUpdateHealthLog}
+                onDeleteLog={handleDeleteHealthLog}
               />
             </TabsContent>
             <TabsContent value="reproduksi">
@@ -181,6 +200,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddLog={handleAddReproductionLog}
                 onUpdateLog={handleUpdateReproductionLog}
+                onDeleteLog={handleDeleteReproductionLog}
               />
             </TabsContent>
             <TabsContent value="pertumbuhan">
@@ -188,6 +208,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddRecord={handleAddGrowthRecord} 
                 onUpdateRecord={handleUpdateGrowthRecord}
+                onDeleteRecord={handleDeleteGrowthRecord}
               />
             </TabsContent>
             <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdatePedigree} /></TabsContent>

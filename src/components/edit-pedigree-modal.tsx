@@ -98,12 +98,12 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
         };
     }
     
-    // Only save if there's actual text data to update
-    if (Object.keys(processedData).length > 0) {
-        onSave(processedData);
-    } else {
-        onClose(); // Close if only photo was updated
-    }
+    onSave(processedData);
+    toast({
+        title: 'Sukses',
+        description: `Data teks untuk ${isDam ? 'Induk' : 'Pejantan'} berhasil diperbarui.`,
+    });
+    onClose();
   };
 
   return (
