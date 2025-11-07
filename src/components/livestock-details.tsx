@@ -69,9 +69,8 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
      // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
-  const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'date'>) => {
-    const newLog = { ...log, date: new Date() };
-    await addReproductionLog(currentAnimal.id, newLog);
+  const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'id'>) => {
+    await addReproductionLog(currentAnimal.id, log);
      // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 

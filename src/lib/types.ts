@@ -7,6 +7,7 @@ export type HealthLog = {
 };
 
 export type ReproductionLog = {
+  id: string; // Unique identifier
   date: Date;
   type: string;
   detail: string;

@@ -210,7 +210,7 @@ export const deleteHealthLog = async (animalId: string, logToDelete: HealthLog):
   }
 };
 
-export const addReproductionLog = async (animalId: string, log: ReproductionLog): Promise<void> => {
+export const addReproductionLog = async (animalId: string, log: Omit<ReproductionLog, 'id'>): Promise<void> => {
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {

@@ -4,7 +4,7 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ReproductionLog, Livestock } from '@/lib/types';
+import { ReproductionLog } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,8 +13,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
+import { formatToYYYYMMDD } from '@/lib/utils';
 
 const reproductionLogSchema = z.object({
+  date: z.string().min(1, 'Tanggal harus diisi.'),
   type: z.enum(['Inseminasi Buatan (IB)', 'Kawin Alami', 'Kebuntingan Dideteksi', 'Melahirkan', 'Kelahiran', 'Abortus', 'Lainnya']),
   detail: z.string().min(1, 'Detail harus diisi'),
   notes: z.string().optional(),
@@ -24,23 +26,37 @@ type ReproductionLogFormData = z.infer<typeof reproductionLogSchema>;
 
 interface ReproductionTabProps {
   animal: Livestock;
-  onAddLog: (log: Omit<ReproductionLog, 'date'>) => void;
+  onAddLog: (log: Omit<ReproductionLog, 'id'>) => void;
 }
 
 export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
   const { toast } = useToast();
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<ReproductionLogFormData>({
     resolver: zodResolver(reproductionLogSchema),
-    defaultValues: { type: 'Inseminasi Buatan (IB)', notes: '' }
+    defaultValues: {
+      date: formatToYYYYMMDD(new Date()),
+      type: 'Inseminasi Buatan (IB)',
+      notes: '',
+      detail: '',
+    }
   });
 
   const onSubmit = (data: ReproductionLogFormData) => {
-    onAddLog(data);
+    const newLog = {
+      ...data,
+      date: new Date(data.date),
+    };
+    onAddLog(newLog);
     toast({
       title: 'Sukses',
       description: 'Catatan reproduksi berhasil disimpan.',
     });
-    reset();
+    reset({
+        date: formatToYYYYMMDD(new Date()),
+        type: 'Inseminasi Buatan (IB)',
+        notes: '',
+        detail: '',
+    });
   };
   
   const sortedLog = [...animal.reproductionLog].sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -75,8 +91,10 @@ export function ReproductionTab({ animal, onAddLog }: ReproductionTabProps) {
                   )}
                 />
               </div>
-              <div className="flex flex-col justify-end">
-                <p className="text-sm text-muted-foreground">Tanggal akan dicatat otomatis.</p>
+              <div>
+                <label>Tanggal</label>
+                <Input type="date" {...register('date')} />
+                {errors.date && <p className="text-destructive text-sm mt-1">{errors.date.message}</p>}
               </div>
             </div>
             <div>
