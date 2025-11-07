@@ -21,10 +21,10 @@ type GrowthRecordFormData = z.infer<typeof growthRecordSchema>;
 
 interface GrowthTabProps {
   animal: Livestock;
-  onAddRecord: (record: Omit<GrowthRecord, 'date' | 'adg'>) => void;
+  onRecordAdded: (record: Omit<GrowthRecord, 'date' | 'adg'>) => void;
 }
 
-export function GrowthTab({ animal, onAddRecord }: GrowthTabProps) {
+export function GrowthTab({ animal, onRecordAdded: onAddRecord }: GrowthTabProps) {
   const { toast } = useToast();
   const { register, handleSubmit, reset, formState: { errors } } = useForm<GrowthRecordFormData>({
     resolver: zodResolver(growthRecordSchema),

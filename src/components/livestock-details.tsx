@@ -53,8 +53,8 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     // The listener will eventually sync, but the optimistic update makes it feel instant.
   }, [currentAnimal.id, toast]);
 
-  const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date' | 'id'>) => {
-    const newLog = { ...log, id: new Date().toISOString(), date: new Date() };
+  const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'id'>) => {
+    const newLog = { ...log, id: new Date().toISOString() };
     await addHealthLog(currentAnimal.id, newLog);
     // Data will be re-fetched by the listener, so no need for optimistic update here.
   }, [currentAnimal.id]);
@@ -97,12 +97,12 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     <>
       <div className="bg-card rounded-xl overflow-hidden shadow-lg">
         <div className="bg-primary text-primary-foreground p-6 sm:p-8">
-          <div className="flex items-center justify-between">
-             <div className="flex items-center gap-2">
-              <SidebarTrigger className="md:hidden size-11" />
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="md:hidden size-11 flex-shrink-0" />
               <h1 className="text-3xl font-bold">E-TernakID</h1>
             </div>
-            <div className="hidden sm:flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-4 flex-shrink-0">
               <Badge variant="secondary" className="bg-white text-primary hover:bg-white">{currentAnimal.status}</Badge>
               <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
                   <Pencil className="mr-2 h-4 w-4" /> Edit
@@ -175,7 +175,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
               />
             </TabsContent>
             <TabsContent value="reproduksi"><ReproductionTab animal={currentAnimal} onAddLog={handleAddReproductionLog} /></TabsContent>
-            <TabsContent value="pertumbuhan"><GrowthTab animal={currentAnimal} onAddRecord={handleAddGrowthRecord} /></TabsContent>
+            <TabsContent value="pertumbuhan"><GrowthTab animal={currentAnimal} onRecordAdded={handleAddGrowthRecord} /></TabsContent>
             <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdatePedigree} /></TabsContent>
           </div>
         </Tabs>

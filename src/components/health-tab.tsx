@@ -32,8 +32,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { formatToYYYYMMDD } from '@/lib/utils';
 
 const healthLogSchema = z.object({
+  date: z.string().min(1, 'Tanggal harus diisi.'),
   type: z.enum(['Vaksinasi', 'Pengobatan', 'Lainnya']),
   detail: z.string().optional(),
   notes: z.string().optional(),
@@ -51,7 +53,7 @@ type HealthLogFormData = z.infer<typeof healthLogSchema>;
 
 interface HealthTabProps {
   animal: Livestock;
-  onAddLog: (log: Omit<HealthLog, 'date' | 'id'>) => void;
+  onAddLog: (log: Omit<HealthLog, 'id'>) => void;
   onUpdateLog: (log: HealthLog) => void;
   onDeleteLog: (log: HealthLog) => void;
 }
@@ -63,7 +65,7 @@ export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: Health
 
   const { control: addFormControl, register: addFormRegister, handleSubmit: handleAddSubmit, reset: resetAddForm, watch: watchAddForm, formState: { errors: addFormErrors } } = useForm<HealthLogFormData>({
     resolver: zodResolver(healthLogSchema),
-    defaultValues: { type: 'Vaksinasi', notes: '', detail: '' }
+    defaultValues: { type: 'Vaksinasi', notes: '', detail: '', date: formatToYYYYMMDD(new Date()) }
   });
   
   const { control: editFormControl, register: editFormRegister, handleSubmit: handleEditSubmit, reset: resetEditForm, watch: watchEditForm, formState: { errors: editFormErrors } } = useForm<HealthLogFormData>({
@@ -79,17 +81,22 @@ export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: Health
         type: editingLog.type as any,
         detail: editingLog.detail,
         notes: editingLog.notes,
+        date: formatToYYYYMMDD(editingLog.date),
       });
     }
   }, [editingLog, resetEditForm]);
 
   const onAddSubmit = (data: HealthLogFormData) => {
-    onAddLog(data);
+    const newLog = {
+      ...data,
+      date: new Date(data.date),
+    };
+    onAddLog(newLog);
     toast({
       title: 'Sukses',
       description: 'Catatan kesehatan berhasil disimpan.',
     });
-    resetAddForm();
+    resetAddForm({ type: 'Vaksinasi', notes: '', detail: '', date: formatToYYYYMMDD(new Date()) });
   };
   
   const onEditSubmit = (data: HealthLogFormData) => {
@@ -97,7 +104,7 @@ export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: Health
     const updatedLog = {
       ...editingLog,
       ...data,
-      date: new Date(editingLog.date), // keep original date
+      date: new Date(data.date),
     };
     onUpdateLog(updatedLog);
     toast({
@@ -153,8 +160,10 @@ export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: Health
                   )}
                 />
               </div>
-              <div className="flex flex-col justify-end">
-                <p className="text-sm text-muted-foreground">Tanggal akan dicatat otomatis.</p>
+              <div>
+                <label>Tanggal</label>
+                <Input type="date" {...addFormRegister('date')} />
+                {addFormErrors.date && <p className="text-destructive text-sm mt-1">{addFormErrors.date.message}</p>}
               </div>
             </div>
             
@@ -272,10 +281,10 @@ export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: Health
                <div>
                   <label>Tanggal</label>
                   <Input
-                    type="text"
-                    value={editingLog?.date.toLocaleDateString('id-ID') || ''}
-                    disabled
+                    type="date"
+                    {...editFormRegister('date')}
                   />
+                  {editFormErrors.date && <p className="text-destructive text-sm mt-1">{editFormErrors.date.message}</p>}
                 </div>
             </div>
              {(selectedEditType === 'Vaksinasi' || selectedEditType === 'Pengobatan') && (
