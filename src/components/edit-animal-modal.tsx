@@ -191,7 +191,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave, onSav
               <Button type="button" variant="secondary">Batal</Button>
             </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan Teks'}
+              {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
             </Button>
           </DialogFooter>
         </form>
