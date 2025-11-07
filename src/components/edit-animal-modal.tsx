@@ -163,8 +163,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave, onSav
                 control={control}
                 render={({ field }) => (
                   <RadioGroup
-                    onValuecha
-nge={field.onChange}
+                    onValueChange={field.onChange}
                     defaultValue={field.value}
                     className="flex items-center space-x-4 mt-2"
                   >
