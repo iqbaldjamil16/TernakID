@@ -84,6 +84,10 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave, onSav
         const dataUrl = reader.result as string;
         setPhotoPreview(dataUrl); // Optimistically update preview
         onSavePhoto(dataUrl); // Immediately save photo to the database
+        toast({
+          title: "Foto Diperbarui",
+          description: "Foto ternak baru sedang disimpan secara permanen.",
+        });
       };
       reader.readAsDataURL(file);
     }

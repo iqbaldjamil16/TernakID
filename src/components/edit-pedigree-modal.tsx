@@ -74,7 +74,7 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
         const dataUrl = reader.result as string;
         setPhotoPreview(dataUrl); // Optimistic UI update
         // Immediately save the photo data
-        onSave({ photoUrl: dataUrl }); 
+        onSave({ photoUrl: dataUrl });
         toast({
           title: "Foto Disimpan",
           description: "Foto baru sedang disimpan secara permanen.",
