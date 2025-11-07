@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import {
   updateAnimal,
@@ -33,13 +33,17 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
   }, [animal]);
 
   const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id'>>) => {
-    const optimisticData = { ...currentAnimal, ...updatedData };
-    setCurrentAnimal(optimisticData); // Optimistic update
+    // Optimistic update
+    const newAnimalState = { ...currentAnimal, ...updatedData };
+    setCurrentAnimal(newAnimalState as Livestock);
+    
     try {
         await updateAnimal(currentAnimal.id, updatedData);
+        // If successful, the listener will eventually sync, but our optimistic update is already shown.
     } catch (error) {
         console.error("Failed to update animal, rolling back UI", error);
-        setCurrentAnimal(currentAnimal); // Rollback on error
+        // Rollback on error
+        setCurrentAnimal(currentAnimal); 
     }
     setIsModalOpen(false);
   }, [currentAnimal]);
@@ -94,7 +98,12 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
               <SidebarTrigger className="md:hidden size-11" />
               <h1 className="text-3xl font-bold">E-TernakID</h1>
             </div>
-            <Badge variant="secondary" className="bg-white text-primary hover:bg-white hidden sm:inline-flex">{currentAnimal.status}</Badge>
+            <div className="hidden sm:flex items-center gap-4">
+              <Badge variant="secondary" className="bg-white text-primary hover:bg-white">{currentAnimal.status}</Badge>
+              <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
+                  <Pencil className="mr-2 h-4 w-4" /> Edit
+              </Button>
+            </div>
           </div>
           <div className="mt-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
             <Dialog>
@@ -112,7 +121,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 </div>
               </DialogTrigger>
               <DialogContent className="p-0 max-w-xl bg-transparent border-0">
-                <DialogHeader className='sr-only'>
+                <DialogHeader className="sr-only">
                   <DialogTitle>Foto Ternak: {currentAnimal.name}</DialogTitle>
                 </DialogHeader>
                 <Image
@@ -125,17 +134,12 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
               </DialogContent>
             </Dialog>
             <div className="sm:mt-8 text-center sm:text-left w-full">
-              <div className="sm:flex sm:items-center sm:justify-between">
-                <h2 className="text-3xl sm:text-4xl font-extrabold">{currentAnimal.name}</h2>
-                <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500 hidden sm:inline-flex">
-                    <Pencil className="mr-2 h-4 w-4" /> Edit
-                </Button>
-              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold">{currentAnimal.name}</h2>
               <p className="text-sm opacity-90">No. Registrasi: {currentAnimal.regId}</p>
               <p className="text-lg font-semibold mt-1">{currentAnimal.breed}, {currentAnimal.gender}</p>
-               <div className="mt-4 flex flex-wrap gap-2 items-center justify-center sm:justify-start">
-                  <Badge variant="secondary" className="bg-white text-primary hover:bg-white sm:hidden">{currentAnimal.status}</Badge>
-                  <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500 sm:hidden">
+               <div className="mt-4 flex flex-wrap gap-2 items-center justify-center sm:justify-start sm:hidden">
+                  <Badge variant="secondary" className="bg-white text-primary hover:bg-white">{currentAnimal.status}</Badge>
+                  <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
                     <Pencil className="mr-2 h-4 w-4" /> Edit
                   </Button>
                </div>
