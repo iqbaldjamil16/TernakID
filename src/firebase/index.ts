@@ -3,69 +3,62 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, enableIndexedDbPersistence, Firestore, initializeFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore'
+import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
 
-let firebaseApp: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let firestore: Firestore | null = null;
+// We will use a singleton pattern to ensure Firebase is initialized only once.
+let firebaseServices: {
+  firebaseApp: FirebaseApp;
+  auth: Auth;
+  firestore: Firestore;
+} | null = null;
+
+// This flag ensures persistence is only enabled once.
 let persistenceEnabled = false;
 
-function initializeFirebaseApp() {
-    if (firebaseApp) return firebaseApp;
-
-    if (getApps().length > 0) {
-        firebaseApp = getApp();
-    } else {
-        try {
-            // This will throw if the config is not available from the environment.
-            firebaseApp = initializeApp();
-        } catch (e) {
-            if (process.env.NODE_ENV === "production") {
-                console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-            }
-            firebaseApp = initializeApp(firebaseConfig);
-        }
-    }
-    return firebaseApp;
-}
-
 export function initializeFirebase() {
-    if (firestore && auth && firebaseApp) {
-        return { firebaseApp, auth, firestore };
-    }
+  // If already initialized, return the existing services.
+  if (firebaseServices) {
+    return firebaseServices;
+  }
 
-    const app = initializeFirebaseApp();
-    
-    // Initialize Firestore with persistence settings.
-    // This must be done before any other Firestore operations.
-    if (!firestore) {
-       let db = getFirestore(app);
-       if (!persistenceEnabled) {
-         enableIndexedDbPersistence(db)
-            .then(() => {
-                persistenceEnabled = true;
-                console.log("Firebase offline persistence enabled.");
-            })
-            .catch((err) => {
-                if (err.code === 'failed-precondition') {
-                    console.warn("Firestore offline persistence could not be enabled, likely due to another tab being open.");
-                } else if (err.code === 'unimplemented') {
-                    console.warn("Firestore offline persistence is not supported in this browser.");
-                }
-                // Mark as enabled to avoid retrying in the same session
-                persistenceEnabled = true;
-            });
-       }
-       firestore = db;
-    }
+  // Initialize the Firebase App.
+  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-    if (!auth) {
-        auth = getAuth(app);
-    }
-    
-    return { firebaseApp: app, auth, firestore };
+  // Initialize Auth.
+  const auth = getAuth(app);
+
+  // Initialize Firestore.
+  const firestore = getFirestore(app);
+
+  // Attempt to enable persistence, but only once.
+  if (!persistenceEnabled) {
+    enableIndexedDbPersistence(firestore)
+      .then(() => {
+        // This will only be logged once in the entire app lifecycle.
+        console.log("Firebase offline persistence enabled successfully.");
+      })
+      .catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.warn("Firestore offline persistence could not be enabled, likely due to another tab being open.");
+        } else if (err.code === 'unimplemented') {
+          console.warn("Firestore offline persistence is not supported in this browser.");
+        }
+      });
+    // Mark as attempted so we don't try again.
+    persistenceEnabled = true;
+  }
+
+  // Store the initialized services in the singleton.
+  firebaseServices = {
+    firebaseApp: app,
+    auth,
+    firestore,
+  };
+
+  return firebaseServices;
 }
 
+// Export other necessary modules.
 export * from './provider';
 export * from './client-provider';
 export * from './firestore/use-collection';
