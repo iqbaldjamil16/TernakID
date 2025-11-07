@@ -61,7 +61,7 @@ export default function LivestockSidebar({ animals, selectedAnimalId, onSelect, 
                 Menyiapkan data...
             </div>
            )}
-          {filteredAnimals.map((animal) => (
+          {!isPreparingData && filteredAnimals.map((animal) => (
             <SidebarMenuItem key={animal.id}>
               <SidebarMenuButton
                 onClick={() => onSelect(animal.id)}
