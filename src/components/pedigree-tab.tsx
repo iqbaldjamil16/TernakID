@@ -86,6 +86,9 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
                         </div>
                       </DialogTrigger>
                        <DialogContent className="p-0 max-w-xl bg-transparent border-0">
+                          <DialogHeader className="sr-only">
+                            <DialogTitle>Foto Induk: {dam?.name || 'Induk'}</DialogTitle>
+                          </DialogHeader>
                           <Image
                             src={dam?.photoUrl || `https://picsum.photos/seed/dam-${animal.id}/600`}
                             alt="Foto Induk"
@@ -127,6 +130,9 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
                         </div>
                       </DialogTrigger>
                        <DialogContent className="p-0 max-w-xl bg-transparent border-0">
+                          <DialogHeader className="sr-only">
+                            <DialogTitle>Foto Pejantan: {sire?.name || 'Pejantan'}</DialogTitle>
+                          </DialogHeader>
                           <Image
                             src={sire?.photoUrl || `https://picsum.photos/seed/sire-${animal.id}/600`}
                             alt="Foto Pejantan"
