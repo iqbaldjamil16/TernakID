@@ -12,6 +12,7 @@ import {
   limit,
   updateDoc,
   arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import { initializeFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from '@/lib/types';
@@ -32,8 +33,12 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
     owner: "Peternakan Umum",
     address: `Kandang Umum, Desa Makmur`,
     birthDate: birthDate,
-    healthLog: [],
-    reproductionLog: [],
+    healthLog: [
+      { id: `hl_${birthDate.getTime()}`, date: new Date(birthDate.getTime() + 30 * 24 * 3600 * 1000), type: 'Vaksinasi', detail: 'Vaksin PMK', notes: 'Dosis pertama' },
+    ],
+    reproductionLog: [
+       { id: `rl_${birthDate.getTime()}`, date: new Date(birthDate.getTime() + 730 * 24 * 3600 * 1000), type: 'Inseminasi Buatan (IB)', detail: 'Semen ID: BX-01', notes: 'IB pertama' },
+    ],
     growthRecords: [
       { id: `gr_${birthDate.getTime()}`, date: birthDate, weight: 30 + (idNumber % 10) },
       { id: `gr_${birthDate.getTime() + 1}`, date: new Date(birthDate.getTime() + 180 * 24 * 3600 * 1000), weight: 150 + (idNumber % 50) },
@@ -89,9 +94,9 @@ export function listenToAnimals(callback: (animals: Livestock[]) => void): () =>
             id: doc.id,
             ...data,
             birthDate: data.birthDate?.toDate ? data.birthDate.toDate() : new Date(data.birthDate),
-            healthLog: (data.healthLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
-            reproductionLog: (data.reproductionLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
-            growthRecords: (data.growthRecords || []).map((rec: any) => ({...rec, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
+            healthLog: (data.healthLog || []).map((log: any) => ({...log, id: log.id || `hl_${log.date.seconds}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+            reproductionLog: (data.reproductionLog || []).map((log: any) => ({...log, id: log.id || `rl_${log.date.seconds}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+            growthRecords: (data.growthRecords || []).map((rec: any) => ({...rec, id: rec.id || `gr_${rec.date.seconds}`, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
         } as Livestock;
     });
     callback(animals);
@@ -189,15 +194,7 @@ export const deleteHealthLog = async (animalId: string, logToDelete: HealthLog):
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
-    await runTransaction(firestore, async (transaction) => {
-        const animalDoc = await transaction.get(docRef);
-        if (!animalDoc.exists()) {
-            throw "Document does not exist!";
-        }
-        const currentLogs: HealthLog[] = animalDoc.data().healthLog || [];
-        const logsToKeep = currentLogs.filter(log => log.id !== logToDelete.id);
-        transaction.update(docRef, { healthLog: logsToKeep });
-    });
+     await updateDoc(docRef, { healthLog: arrayRemove(logToDelete) });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
@@ -261,15 +258,7 @@ export const deleteReproductionLog = async (animalId: string, logToDelete: Repro
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
-    await runTransaction(firestore, async (transaction) => {
-        const animalDoc = await transaction.get(docRef);
-        if (!animalDoc.exists()) {
-            throw "Document does not exist!";
-        }
-        const currentLogs: ReproductionLog[] = animalDoc.data().reproductionLog || [];
-        const logsToKeep = currentLogs.filter(log => log.id !== logToDelete.id);
-        transaction.update(docRef, { reproductionLog: logsToKeep });
-    });
+    await updateDoc(docRef, { reproductionLog: arrayRemove(logToDelete) });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
@@ -313,14 +302,17 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
       const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({...rec, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)}));
       const recordIndex = currentRecords.findIndex(rec => rec.id === updatedRecord.id);
       if (recordIndex === -1) {
-        throw `Record with id ${updatedRecord.id} not found.`;
+        // Fallback for old data that might not have an ID
+        const dateMatchIndex = currentRecords.findIndex(rec => rec.date.getTime() === updatedRecord.date.getTime() && rec.weight === updatedRecord.weight);
+         if(dateMatchIndex !== -1) {
+            currentRecords[dateMatchIndex] = { ...updatedRecord, id: updatedRecord.id || `gr_${Date.now()}` };
+         } else {
+            throw `Record with id ${updatedRecord.id} not found.`;
+         }
+      } else {
+         currentRecords[recordIndex] = updatedRecord;
       }
-      // ADG is a calculated field, so we just save the core data
-      currentRecords[recordIndex] = {
-        id: updatedRecord.id,
-        date: updatedRecord.date,
-        weight: updatedRecord.weight
-      };
+      
       transaction.update(docRef, { growthRecords: currentRecords });
     });
   } catch (e) {
@@ -338,15 +330,41 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
 export const deleteGrowthRecord = async (animalId: string, recordToDelete: GrowthRecord): Promise<void> => {
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
+  
+  // The object to remove needs to be an exact match, including the date object type.
+  const recordToRemove = {
+    ...recordToDelete,
+    date: new Date(recordToDelete.date), // ensure it's a JS Date
+    adg: undefined // adg is a calculated field and not stored
+  };
+  delete (recordToRemove as Partial<typeof recordToRemove>).adg;
+  
   try {
-    await runTransaction(firestore, async (transaction) => {
+     await runTransaction(firestore, async (transaction) => {
         const animalDoc = await transaction.get(docRef);
         if (!animalDoc.exists()) {
             throw "Document does not exist!";
         }
-        const currentRecords: GrowthRecord[] = animalDoc.data().growthRecords || [];
-        const recordsToKeep = currentRecords.filter(rec => rec.id !== recordToDelete.id);
-        transaction.update(docRef, { growthRecords: recordsToKeep });
+
+        const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({
+            ...rec,
+            date: rec.date.toDate() // Ensure all dates are JS Dates for comparison
+        }));
+        
+        const recordIndex = currentRecords.findIndex(rec => rec.id === recordToDelete.id);
+
+        if (recordIndex > -1) {
+            currentRecords.splice(recordIndex, 1);
+            transaction.update(docRef, { growthRecords: currentRecords });
+        } else {
+             // Fallback for older data without IDs
+            const recordsToKeep = currentRecords.filter(rec => !(rec.date.getTime() === recordToDelete.date.getTime() && rec.weight === recordToDelete.weight));
+            if(recordsToKeep.length < currentRecords.length) {
+                 transaction.update(docRef, { growthRecords: recordsToKeep });
+            } else {
+                console.warn("Could not find record to delete:", recordToDelete);
+            }
+        }
     });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
