@@ -1,12 +1,20 @@
 'use client'
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Livestock, Pedigree, Dam, Sire } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { Pencil } from 'lucide-react';
 import EditPedigreeModal from './edit-pedigree-modal';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface PedigreeTabProps {
   animal: Livestock;
@@ -28,28 +36,29 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
     setIsModalOpen(false);
   };
 
-  const handleSave = (updatedEntityData: Partial<Dam> | Partial<Sire>) => {
+  const handleSave = (updatedData: Partial<Dam> | Partial<Sire>) => {
     if (!editingEntity) return;
+
+    const currentEntityData = animal.pedigree?.[editingEntity] || {};
+    
+    // Merge existing data with updated data
+    const finalData = { ...currentEntityData, ...updatedData };
 
     const updatedPedigree = {
       ...animal.pedigree,
-      [editingEntity]: {
-        ...animal.pedigree?.[editingEntity],
-        ...updatedEntityData,
-      },
+      [editingEntity]: finalData,
     };
-
+    
     onUpdate({ pedigree: updatedPedigree as Pedigree });
     toast({
-      title: 'Sukses',
-      description: `Data ${editingEntity === 'dam' ? 'Induk' : 'Pejantan'} berhasil diperbarui.`,
+        title: 'Sukses',
+        description: `Data ${editingEntity === 'dam' ? 'Induk' : 'Pejantan'} berhasil diperbarui.`,
     });
     handleCloseModal();
   };
 
   const dam = animal.pedigree?.dam;
   const sire = animal.pedigree?.sire;
-
   const entityToEdit = editingEntity ? (animal.pedigree?.[editingEntity] || {}) : {};
 
   return (
@@ -60,34 +69,87 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
           <CardDescription>Data silsilah terintegrasi penting untuk program peningkatan mutu genetik.</CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="p-4 bg-pink-50 rounded-lg border border-pink-200">
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-bold text-pink-700 text-lg">Induk (Dam)</h3>
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenModal('dam')}>
-                            <Pencil className="h-4 w-4" />
-                        </Button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Dam Card */}
+                <div className="p-4 bg-pink-50 rounded-lg border border-pink-200 flex flex-col sm:flex-row gap-4">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="w-24 h-24 rounded-full border-2 border-pink-200 object-cover mx-auto sm:mx-0 cursor-pointer flex-shrink-0">
+                           <Image
+                            src={dam?.photoUrl || `https://picsum.photos/seed/dam-${animal.id}/200`}
+                            alt="Foto Induk"
+                            width={96}
+                            height={96}
+                            className="rounded-full w-full h-full object-cover"
+                            data-ai-hint="livestock animal"
+                          />
+                        </div>
+                      </DialogTrigger>
+                       <DialogContent className="p-0 max-w-xl bg-transparent border-0">
+                          <Image
+                            src={dam?.photoUrl || `https://picsum.photos/seed/dam-${animal.id}/600`}
+                            alt="Foto Induk"
+                            width={600}
+                            height={600}
+                            className="rounded-lg object-contain w-full h-full"
+                          />
+                      </DialogContent>
+                    </Dialog>
+                    <div className='flex-grow'>
+                        <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-bold text-pink-700 text-lg">Induk (Dam)</h3>
+                            <Button variant="ghost" size="icon" className='h-8 w-8' onClick={() => handleOpenModal('dam')}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <ul className="text-sm space-y-1 text-gray-700">
+                            <li><span className="font-semibold">Nama:</span> {dam?.name || '-'}</li>
+                            <li><span className="font-semibold">No. Reg:</span> {dam?.regId || '-'}</li>
+                            <li><span className="font-semibold">Bangsa/Ras:</span> {dam?.breed || '-'}</li>
+                            <li><span className="font-semibold">Jml Anak:</span> {dam?.offspring ?? '-'}</li>
+                        </ul>
                     </div>
-                    <ul className="text-sm space-y-1 text-gray-700">
-                        <li><span className="font-semibold">Nama:</span> {dam?.name || '-'}</li>
-                        <li><span className="font-semibold">No. Reg:</span> {dam?.regId || '-'}</li>
-                        <li><span className="font-semibold">Bangsa/Ras:</span> {dam?.breed || '-'}</li>
-                        <li><span className="font-semibold">Jml Anak:</span> {dam?.offspring ?? '-'}</li>
-                    </ul>
                 </div>
-                <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                     <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-bold text-indigo-700 text-lg">Pejantan (Sire)</h3>
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenModal('sire')}>
-                            <Pencil className="h-4 w-4" />
-                        </Button>
+
+                {/* Sire Card */}
+                <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200 flex flex-col sm:flex-row gap-4">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                         <div className="w-24 h-24 rounded-full border-2 border-indigo-200 object-cover mx-auto sm:mx-0 cursor-pointer flex-shrink-0">
+                          <Image
+                            src={sire?.photoUrl || `https://picsum.photos/seed/sire-${animal.id}/200`}
+                            alt="Foto Pejantan"
+                            width={96}
+                            height={96}
+                            className="rounded-full w-full h-full object-cover"
+                            data-ai-hint="livestock animal"
+                          />
+                        </div>
+                      </DialogTrigger>
+                       <DialogContent className="p-0 max-w-xl bg-transparent border-0">
+                          <Image
+                            src={sire?.photoUrl || `https://picsum.photos/seed/sire-${animal.id}/600`}
+                            alt="Foto Pejantan"
+                            width={600}
+                            height={600}
+                            className="rounded-lg object-contain w-full h-full"
+                          />
+                      </DialogContent>
+                    </Dialog>
+                    <div className='flex-grow'>
+                        <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-bold text-indigo-700 text-lg">Pejantan (Sire)</h3>
+                            <Button variant="ghost" size="icon" className='h-8 w-8' onClick={() => handleOpenModal('sire')}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <ul className="text-sm space-y-1 text-gray-700">
+                            <li><span className="font-semibold">Nama/Semen:</span> {sire?.name || '-'}</li>
+                            <li><span className="font-semibold">No. Semen/ID:</span> {sire?.semenId || '-'}</li>
+                            <li><span className="font-semibold">Bangsa/Ras:</span> {sire?.breed || '-'}</li>
+                            <li><span className="font-semibold">Karakteristik:</span> {sire?.characteristics || '-'}</li>
+                        </ul>
                     </div>
-                     <ul className="text-sm space-y-1 text-gray-700">
-                        <li><span className="font-semibold">Nama/Semen:</span> {sire?.name || '-'}</li>
-                        <li><span className="font-semibold">No. Semen/ID:</span> {sire?.semenId || '-'}</li>
-                        <li><span className="font-semibold">Bangsa/Ras:</span> {sire?.breed || '-'}</li>
-                        <li><span className="font-semibold">Karakteristik:</span> {sire?.characteristics || '-'}</li>
-                    </ul>
                 </div>
             </div>
         </CardContent>

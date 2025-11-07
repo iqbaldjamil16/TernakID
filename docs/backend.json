@@ -77,7 +77,8 @@
         "name": { "type": "string" },
         "regId": { "type": "string" },
         "breed": { "type": "string" },
-        "offspring": { "type": "number" }
+        "offspring": { "type": "number" },
+        "photoUrl": { "type": "string", "format": "uri" }
       }
     },
     "Sire": {
@@ -87,7 +88,8 @@
         "name": { "type": "string" },
         "semenId": { "type": "string" },
         "breed": { "type": "string" },
-        "characteristics": { "type": "string" }
+        "characteristics": { "type": "string" },
+        "photoUrl": { "type": "string", "format": "uri" }
       }
     }
   },

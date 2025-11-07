@@ -26,6 +26,7 @@ export type Dam = {
   regId?: string;
   breed?: string;
   offspring?: number;
+  photoUrl?: string;
 };
 
 export type Sire = {
@@ -33,6 +34,7 @@ export type Sire = {
   semenId?: string;
   breed?: string;
   characteristics?: string;
+  photoUrl?: string;
 };
 
 export type Pedigree = {

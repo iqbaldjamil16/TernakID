@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,12 +18,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { Upload } from 'lucide-react';
 
 const damSchema = z.object({
   name: z.string().optional(),
   regId: z.string().optional(),
   breed: z.string().optional(),
   offspring: z.number().optional(),
+  photoUrl: z.string().optional(), // Now expecting a string, possibly a data URI
 });
 
 const sireSchema = z.object({
@@ -30,6 +34,7 @@ const sireSchema = z.object({
   semenId: z.string().optional(),
   breed: z.string().optional(),
   characteristics: z.string().optional(),
+  photoUrl: z.string().optional(),
 });
 
 type DamFormData = z.infer<typeof damSchema>;
@@ -46,6 +51,10 @@ interface EditPedigreeModalProps {
 export default function EditPedigreeModal({ isOpen, onClose, entityType, entity, onSave }: EditPedigreeModalProps) {
   const isDam = entityType === 'dam';
   const schema = isDam ? damSchema : sireSchema;
+  const { toast } = useToast();
+
+  const [photoPreview, setPhotoPreview] = useState<string | null>(entity.photoUrl || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm({
     resolver: zodResolver(schema),
@@ -54,18 +63,46 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
 
   useEffect(() => {
     reset(entity);
+    setPhotoPreview(entity.photoUrl || null);
   }, [entity, reset]);
 
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setPhotoPreview(dataUrl); // Optimistic UI update
+        // Immediately save the photo data
+        onSave({ photoUrl: dataUrl }); 
+        toast({
+          title: "Foto Disimpan",
+          description: "Foto baru sedang disimpan secara permanen.",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const onSubmit = (data: DamFormData | SireFormData) => {
+    // Exclude photoUrl from the main text save, as it's handled separately
+    const { photoUrl, ...textData } = data;
+    
+    let processedData: Partial<Dam> | Partial<Sire> = textData;
+
     if (isDam) {
-        const offspringAsNumber = Number((data as DamFormData).offspring);
-        const updatedData = {
-          ...data,
+        const offspringAsNumber = Number((textData as DamFormData).offspring);
+        processedData = {
+          ...textData,
           offspring: isNaN(offspringAsNumber) || offspringAsNumber === 0 ? undefined : offspringAsNumber
         };
-        onSave(updatedData);
+    }
+    
+    // Only save if there's actual text data to update
+    if (Object.keys(processedData).length > 0) {
+        onSave(processedData);
     } else {
-        onSave(data);
+        onClose(); // Close if only photo was updated
     }
   };
 
@@ -76,7 +113,28 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
           <DialogTitle>Edit Data {isDam ? 'Induk (Dam)' : 'Pejantan (Sire)'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
+             <div className="flex flex-col items-center gap-4">
+               <Image
+                  src={photoPreview || `https://picsum.photos/seed/placeholder-${entityType}/200`}
+                  alt={`Foto ${isDam ? 'Induk' : 'Pejantan'}`}
+                  width={128}
+                  height={128}
+                  className="rounded-full object-cover w-32 h-32 border-2"
+              />
+               <Input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  ref={fileInputRef}
+              />
+               <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" /> Unggah Foto
+              </Button>
+            </div>
+
             {isDam ? (
               <>
                 <div>
