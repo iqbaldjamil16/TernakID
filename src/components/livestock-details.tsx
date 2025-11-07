@@ -32,18 +32,19 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     setCurrentAnimal(animal);
   }, [animal]);
 
-  const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id'>>) => {
+  const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id' | 'photoUrl'>> & { photoUrl?: string | null }) => {
+    const dataToSave: Partial<Livestock> = { ...updatedData };
+
     // Optimistic update
-    const newAnimalState = { ...currentAnimal, ...updatedData };
-    setCurrentAnimal(newAnimalState as Livestock);
+    const newAnimalState = { ...currentAnimal, ...dataToSave } as Livestock;
+    setCurrentAnimal(newAnimalState);
     
     try {
-        await updateAnimal(currentAnimal.id, updatedData);
-        // If successful, the listener will eventually sync, but our optimistic update is already shown.
+        await updateAnimal(currentAnimal.id, dataToSave);
+        // Listener will sync, but optimistic update is shown.
     } catch (error) {
         console.error("Failed to update animal, rolling back UI", error);
-        // Rollback on error
-        setCurrentAnimal(currentAnimal); 
+        setCurrentAnimal(currentAnimal); // Rollback on error
     }
     setIsModalOpen(false);
   }, [currentAnimal]);
@@ -228,3 +229,5 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
+
+    
