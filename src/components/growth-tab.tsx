@@ -58,11 +58,11 @@ export function GrowthTab({ animal, onAddRecord }: GrowthTabProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col sm:flex-row gap-2">
-            <div className="w-full sm:w-2/3">
+            <div className="flex-grow">
               <Input type="number" placeholder="Bobot (kg)" {...register('weight', { valueAsNumber: true })} />
               {errors.weight && <p className="text-destructive text-sm mt-1">{errors.weight.message}</p>}
             </div>
-            <Button type="submit" className="w-full sm:w-1/3">
+            <Button type="submit" className="w-full sm:w-auto">
               <Save className="mr-2 h-4 w-4" />
               Simpan Bobot
             </Button>

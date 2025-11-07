@@ -47,45 +47,36 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
 
   const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date' | 'id'>) => {
     const newLog = { ...log, id: new Date().toISOString(), date: new Date() };
-    const optimisticLogs = [...(currentAnimal.healthLog || []), newLog];
-    setCurrentAnimal(prev => ({...prev, healthLog: optimisticLogs}));
     await addHealthLog(currentAnimal.id, newLog);
-  }, [currentAnimal]);
+    // Data will be re-fetched by the listener, so no need for optimistic update here.
+  }, [currentAnimal.id]);
   
   const handleUpdateHealthLog = useCallback(async (log: HealthLog) => {
-    const optimisticLogs = (currentAnimal.healthLog || []).map(l => l.id === log.id ? log : l);
-    setCurrentAnimal(prev => ({...prev, healthLog: optimisticLogs}));
     await updateHealthLog(currentAnimal.id, log);
-  }, [currentAnimal]);
+    // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
 
   const handleDeleteHealthLog = useCallback(async (log: HealthLog) => {
-    const logToDelete = (currentAnimal.healthLog || []).find(l => l.id === log.id);
-    if (!logToDelete) return;
-    
-    const optimisticLogs = (currentAnimal.healthLog || []).filter(l => l.id !== log.id);
-    setCurrentAnimal(prev => ({...prev, healthLog: optimisticLogs}));
-    await deleteHealthLog(currentAnimal.id, logToDelete);
-  }, [currentAnimal]);
+    await deleteHealthLog(currentAnimal.id, log);
+     // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
 
   const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'date'>) => {
     const newLog = { ...log, date: new Date() };
-    const optimisticLogs = [...(currentAnimal.reproductionLog || []), newLog];
-    setCurrentAnimal(prev => ({...prev, reproductionLog: optimisticLogs}));
     await addReproductionLog(currentAnimal.id, newLog);
-  }, [currentAnimal]);
+     // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
 
   const handleAddGrowthRecord = useCallback(async (record: Omit<GrowthRecord, 'date' | 'adg'>) => {
     const newRecord = { ...record, date: new Date() };
-    const optimisticRecords = [...(currentAnimal.growthRecords || []), newRecord];
-    setCurrentAnimal(prev => ({...prev, growthRecords: optimisticRecords}));
     await addGrowthRecord(currentAnimal.id, newRecord);
-  }, [currentAnimal]);
+     // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
   
   const handleUpdatePedigree = useCallback(async (data: { pedigree: Pedigree }) => {
-    const optimisticData = { ...currentAnimal, pedigree: data.pedigree };
-    setCurrentAnimal(optimisticData);
     await updateAnimal(currentAnimal.id, { pedigree: data.pedigree });
-  }, [currentAnimal]);
+     // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
 
   if (!currentAnimal) {
     return <DetailsSkeleton />;
@@ -103,17 +94,12 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
               <SidebarTrigger className="md:hidden size-11" />
               <h1 className="text-3xl font-bold">E-TernakID</h1>
             </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="bg-white text-primary hover:bg-white">{currentAnimal.status}</Badge>
-              <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
-                <Pencil className="mr-2 h-4 w-4" /> Edit
-              </Button>
-            </div>
+            <Badge variant="secondary" className="bg-white text-primary hover:bg-white hidden sm:inline-flex">{currentAnimal.status}</Badge>
           </div>
           <div className="mt-6 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
             <Dialog>
               <DialogTrigger asChild>
-                <div className="w-56 h-56 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8 mx-auto sm:mx-0 cursor-pointer">
+                <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-full border-4 border-white object-cover mb-4 sm:mb-0 sm:mr-8 mx-auto sm:mx-0 cursor-pointer flex-shrink-0">
                   <Image
                       src={photoSrc}
                       alt={`Foto ${currentAnimal.name}`}
@@ -126,7 +112,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 </div>
               </DialogTrigger>
               <DialogContent className="p-0 max-w-xl bg-transparent border-0">
-                <DialogHeader className="sr-only">
+                <DialogHeader className='sr-only'>
                   <DialogTitle>Foto Ternak: {currentAnimal.name}</DialogTitle>
                 </DialogHeader>
                 <Image
@@ -139,9 +125,20 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
               </DialogContent>
             </Dialog>
             <div className="sm:mt-8 text-center sm:text-left w-full">
-              <h2 className="text-3xl sm:text-4xl font-extrabold">{currentAnimal.name}</h2>
+              <div className="sm:flex sm:items-center sm:justify-between">
+                <h2 className="text-3xl sm:text-4xl font-extrabold">{currentAnimal.name}</h2>
+                <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500 hidden sm:inline-flex">
+                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                </Button>
+              </div>
               <p className="text-sm opacity-90">No. Registrasi: {currentAnimal.regId}</p>
               <p className="text-lg font-semibold mt-1">{currentAnimal.breed}, {currentAnimal.gender}</p>
+               <div className="mt-4 flex flex-wrap gap-2 items-center justify-center sm:justify-start">
+                  <Badge variant="secondary" className="bg-white text-primary hover:bg-white sm:hidden">{currentAnimal.status}</Badge>
+                  <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500 sm:hidden">
+                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                  </Button>
+               </div>
             </div>
           </div>
         </div>
