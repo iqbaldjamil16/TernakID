@@ -53,7 +53,7 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
 export async function createDefaultAnimals(count = 100) {
   const { firestore } = initializeFirebase();
   try {
-    const livestockCollectionRef = collection(firestore, LIVESTOCK_COLlection);
+    const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
     const q = query(livestockCollectionRef, limit(1));
     const snapshot = await getDocs(q);
 
