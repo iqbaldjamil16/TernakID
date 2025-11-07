@@ -8,6 +8,7 @@ import {
   deleteHealthLog,
   addReproductionLog,
   addGrowthRecord,
+  updateAnimalPhoto,
 } from '@/lib/data';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord, Pedigree } from '@/lib/types';
 import { calculateAge } from '@/lib/utils';
@@ -23,32 +24,34 @@ import { GrowthTab } from './growth-tab';
 import { PedigreeTab } from './pedigree-tab';
 import EditAnimalModal from './edit-animal-modal';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LivestockDetails({ animal }: { animal: Livestock }) {
   const [currentAnimal, setCurrentAnimal] = useState<Livestock>(animal);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setCurrentAnimal(animal);
   }, [animal]);
 
-  const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id' | 'photoUrl'>> & { photoUrl?: string | null }) => {
-    const dataToSave: Partial<Livestock> = { ...updatedData };
-
-    // Optimistic update
-    const newAnimalState = { ...currentAnimal, ...dataToSave } as Livestock;
-    setCurrentAnimal(newAnimalState);
-    
-    try {
-        await updateAnimal(currentAnimal.id, dataToSave);
-        // Listener will sync, but optimistic update is shown.
-    } catch (error) {
-        console.error("Failed to update animal, rolling back UI", error);
-        setCurrentAnimal(currentAnimal); // Rollback on error
-    }
+  const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id' | 'photoUrl'>>) => {
+    // Only handles text data now
+    await updateAnimal(currentAnimal.id, updatedData);
+    // Listener will sync the UI
     setIsModalOpen(false);
-  }, [currentAnimal]);
-
+  }, [currentAnimal.id]);
+  
+  const handleSavePhoto = useCallback(async (photoUrl: string) => {
+    // Optimistic UI update for the photo
+    setCurrentAnimal(prev => ({ ...prev, photoUrl }));
+    await updateAnimalPhoto(currentAnimal.id, photoUrl);
+    toast({
+        title: "Foto Berhasil Diperbarui",
+        description: "Gambar ternak telah disimpan secara permanen.",
+    });
+    // The listener will eventually sync, but the optimistic update makes it feel instant.
+  }, [currentAnimal.id, toast]);
 
   const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'date' | 'id'>) => {
     const newLog = { ...log, id: new Date().toISOString(), date: new Date() };
@@ -183,6 +186,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
           onClose={() => setIsModalOpen(false)}
           animal={currentAnimal}
           onSave={handleUpdate}
+          onSavePhoto={handleSavePhoto}
         />
       )}
     </>
@@ -229,5 +233,3 @@ const DetailsSkeleton = () => (
         </div>
     </div>
 )
-
-    

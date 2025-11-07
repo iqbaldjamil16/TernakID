@@ -121,6 +121,22 @@ export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livesto
   });
 };
 
+export const updateAnimalPhoto = async (id: string, photoUrl: string): Promise<void> => {
+  const { firestore } = initializeFirebase();
+  const docRef = doc(firestore, LIVESTOCK_COLLECTION, id);
+  const updatedData = { photoUrl };
+  return updateDoc(docRef, updatedData).catch(async (serverError) => {
+    const permissionError = new FirestorePermissionError({
+      path: docRef.path,
+      operation: 'update',
+      requestResourceData: updatedData,
+    });
+    console.error(permissionError.message);
+    errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
+  });
+};
+
 export const addHealthLog = async (animalId: string, log: HealthLog): Promise<void> => {
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);

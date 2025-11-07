@@ -30,7 +30,7 @@ const editSchema = z.object({
   address: z.string().min(1, 'Alamat harus diisi'),
   owner: z.string().min(1, 'Nama pemilik harus diisi'),
   birthDate: z.string().min(1, 'Tanggal lahir harus diisi'),
-  photoUrl: z.string().optional().nullable(),
+  // photoUrl is handled separately now
 });
 
 type EditFormData = z.infer<typeof editSchema>;
@@ -39,15 +39,16 @@ interface EditAnimalModalProps {
   isOpen: boolean;
   onClose: () => void;
   animal: Livestock;
-  onSave: (data: Partial<Omit<Livestock, 'id'>>) => void;
+  onSave: (data: Partial<Omit<Livestock, 'id' | 'photoUrl'>>) => void;
+  onSavePhoto: (photoUrl: string) => void;
 }
 
-export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: EditAnimalModalProps) {
+export default function EditAnimalModal({ isOpen, onClose, animal, onSave, onSavePhoto }: EditAnimalModalProps) {
   const { toast } = useToast();
   const [photoPreview, setPhotoPreview] = useState<string | null>(animal.photoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { control, register, handleSubmit, formState: { errors, isSubmitting }, reset, setValue } = useForm<EditFormData>({
+  const { control, register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
       name: animal.name,
@@ -57,7 +58,6 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
       address: animal.address,
       owner: animal.owner,
       birthDate: formatToYYYYMMDD(animal.birthDate),
-      photoUrl: animal.photoUrl,
     },
   });
 
@@ -71,7 +71,6 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
       address: animal.address,
       owner: animal.owner,
       birthDate: formatToYYYYMMDD(animal.birthDate),
-      photoUrl: animal.photoUrl,
     });
     setPhotoPreview(animal.photoUrl || null);
   }, [animal, reset]);
@@ -83,8 +82,8 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
-        setPhotoPreview(dataUrl);
-        setValue('photoUrl', dataUrl, { shouldValidate: true });
+        setPhotoPreview(dataUrl); // Optimistically update preview
+        onSavePhoto(dataUrl); // Immediately save photo to the database
       };
       reader.readAsDataURL(file);
     }
@@ -99,7 +98,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
     onSave(updatedData);
     toast({
       title: 'Perubahan Disimpan',
-      description: `Detail untuk ${animal.name} berhasil diperbarui.`,
+      description: `Detail teks untuk ${animal.name} berhasil diperbarui.`,
     });
     onClose();
   };
@@ -164,7 +163,8 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
                 control={control}
                 render={({ field }) => (
                   <RadioGroup
-                    onValueChange={field.onChange}
+                    onValuecha
+nge={field.onChange}
                     defaultValue={field.value}
                     className="flex items-center space-x-4 mt-2"
                   >
@@ -192,7 +192,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave }: Edi
               <Button type="button" variant="secondary">Batal</Button>
             </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+              {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan Teks'}
             </Button>
           </DialogFooter>
         </form>
