@@ -35,8 +35,8 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
     healthLog: [],
     reproductionLog: [],
     growthRecords: [
-      { date: birthDate, weight: 30 + (idNumber % 10) },
-      { date: new Date(birthDate.getTime() + 180 * 24 * 3600 * 1000), weight: 150 + (idNumber % 50) },
+      { id: `gr_${birthDate.getTime()}`, date: birthDate, weight: 30 + (idNumber % 10) },
+      { id: `gr_${birthDate.getTime() + 1}`, date: new Date(birthDate.getTime() + 180 * 24 * 3600 * 1000), weight: 150 + (idNumber % 50) },
     ],
     pedigree: {
       dam: { name: `Induk-${1000 + idNumber}`, regId: `IND-${1000 + idNumber}`, breed: "Sapi Bali", offspring: 2 },
@@ -137,16 +137,17 @@ export const updateAnimalPhoto = async (id: string, photoUrl: string): Promise<v
   });
 };
 
-export const addHealthLog = async (animalId: string, log: HealthLog): Promise<void> => {
+export const addHealthLog = async (animalId: string, log: Omit<HealthLog, 'id'>): Promise<void> => {
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
+  const newLog = { ...log, id: `hl_${Date.now()}` };
   try {
-    await updateDoc(docRef, { healthLog: arrayUnion(log) });
+    await updateDoc(docRef, { healthLog: arrayUnion(newLog) });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
       operation: 'update',
-      requestResourceData: { healthLog: [log] },
+      requestResourceData: { healthLog: [newLog] },
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
@@ -167,10 +168,9 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
       const currentLogs: HealthLog[] = (animalDoc.data().healthLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)}));
       const logIndex = currentLogs.findIndex(log => log.id === updatedLog.id);
       if (logIndex === -1) {
-        currentLogs.push(updatedLog);
-      } else {
-        currentLogs[logIndex] = updatedLog;
+        throw `Log with id ${updatedLog.id} not found.`;
       }
+      currentLogs[logIndex] = updatedLog;
       transaction.update(docRef, { healthLog: currentLogs });
     });
   } catch (e) {
@@ -210,16 +210,17 @@ export const deleteHealthLog = async (animalId: string, logToDelete: HealthLog):
   }
 };
 
-export const addReproductionLog = async (animalId: string, log: ReproductionLog): Promise<void> => {
+export const addReproductionLog = async (animalId: string, log: Omit<ReproductionLog, 'id'>): Promise<void> => {
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
+  const newLog = { ...log, id: `rl_${Date.now()}` };
   try {
-     await updateDoc(docRef, { reproductionLog: arrayUnion(log) });
+     await updateDoc(docRef, { reproductionLog: arrayUnion(newLog) });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
       operation: 'update',
-      requestResourceData: { reproductionLog: [log] },
+      requestResourceData: { reproductionLog: [newLog] },
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
@@ -239,10 +240,9 @@ export const updateReproductionLog = async (animalId: string, updatedLog: Reprod
       const currentLogs: ReproductionLog[] = (animalDoc.data().reproductionLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)}));
       const logIndex = currentLogs.findIndex(log => log.id === updatedLog.id);
       if (logIndex === -1) {
-        currentLogs.push(updatedLog);
-      } else {
-        currentLogs[logIndex] = updatedLog;
+        throw `Log with id ${updatedLog.id} not found.`;
       }
+      currentLogs[logIndex] = updatedLog;
       transaction.update(docRef, { reproductionLog: currentLogs });
     });
   } catch (e) {
@@ -283,16 +283,17 @@ export const deleteReproductionLog = async (animalId: string, logToDelete: Repro
 };
 
 
-export const addGrowthRecord = async (animalId: string, record: GrowthRecord): Promise<void> => {
+export const addGrowthRecord = async (animalId: string, record: Omit<GrowthRecord, 'id' | 'adg'>): Promise<void> => {
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
+  const newRecord = { ...record, id: `gr_${Date.now()}` };
   try {
-    await updateDoc(docRef, { growthRecords: arrayUnion(record) });
+    await updateDoc(docRef, { growthRecords: arrayUnion(newRecord) });
   } catch (e) {
     const permissionError = new FirestorePermissionError({
       path: docRef.path,
       operation: 'update',
-      requestResourceData: { growthRecords: [record] },
+      requestResourceData: { growthRecords: [newRecord] },
     });
     console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
@@ -300,4 +301,61 @@ export const addGrowthRecord = async (animalId: string, record: GrowthRecord): P
   }
 };
 
-    
+export const updateGrowthRecord = async (animalId: string, updatedRecord: GrowthRecord): Promise<void> => {
+  const { firestore } = initializeFirebase();
+  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
+  try {
+    await runTransaction(firestore, async (transaction) => {
+      const animalDoc = await transaction.get(docRef);
+      if (!animalDoc.exists()) {
+        throw "Document does not exist!";
+      }
+      const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({...rec, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)}));
+      const recordIndex = currentRecords.findIndex(rec => rec.id === updatedRecord.id);
+      if (recordIndex === -1) {
+        throw `Record with id ${updatedRecord.id} not found.`;
+      }
+      // ADG is a calculated field, so we just save the core data
+      currentRecords[recordIndex] = {
+        id: updatedRecord.id,
+        date: updatedRecord.date,
+        weight: updatedRecord.weight
+      };
+      transaction.update(docRef, { growthRecords: currentRecords });
+    });
+  } catch (e) {
+     const permissionError = new FirestorePermissionError({
+      path: docRef.path,
+      operation: 'update',
+      requestResourceData: { growthRecords: [updatedRecord] },
+    });
+    console.error(permissionError.message);
+    errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
+  }
+};
+
+export const deleteGrowthRecord = async (animalId: string, recordToDelete: GrowthRecord): Promise<void> => {
+  const { firestore } = initializeFirebase();
+  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
+  try {
+    await runTransaction(firestore, async (transaction) => {
+        const animalDoc = await transaction.get(docRef);
+        if (!animalDoc.exists()) {
+            throw "Document does not exist!";
+        }
+        const currentRecords: GrowthRecord[] = animalDoc.data().growthRecords || [];
+        const recordsToKeep = currentRecords.filter(rec => rec.id !== recordToDelete.id);
+        transaction.update(docRef, { growthRecords: recordsToKeep });
+    });
+  } catch (e) {
+    const permissionError = new FirestorePermissionError({
+      path: docRef.path,
+      operation: 'update',
+      requestResourceData: { growthRecords: [] }, // Approximation
+    });
+    console.error(permissionError.message);
+    errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
+  }
+};

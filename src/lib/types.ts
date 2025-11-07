@@ -15,6 +15,7 @@ export type ReproductionLog = {
 };
 
 export type GrowthRecord = {
+  id: string; // Unique identifier
   date: Date;
   weight: number;
   adg?: string;

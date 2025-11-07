@@ -10,6 +10,8 @@ import {
   updateReproductionLog,
   deleteReproductionLog,
   addGrowthRecord,
+  updateGrowthRecord,
+  deleteGrowthRecord,
   updateAnimalPhoto,
 } from '@/lib/data';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord, Pedigree } from '@/lib/types';
@@ -56,8 +58,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
   }, [currentAnimal.id, toast]);
 
   const handleAddHealthLog = useCallback(async (log: Omit<HealthLog, 'id'>) => {
-    const newLog = { ...log, id: new Date().toISOString() };
-    await addHealthLog(currentAnimal.id, newLog);
+    await addHealthLog(currentAnimal.id, log);
     // Data will be re-fetched by the listener, so no need for optimistic update here.
   }, [currentAnimal.id]);
   
@@ -86,10 +87,19 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
-  const handleAddGrowthRecord = useCallback(async (record: Omit<GrowthRecord, 'date' | 'adg'>) => {
-    const newRecord = { ...record, date: new Date() };
-    await addGrowthRecord(currentAnimal.id, newRecord);
+  const handleAddGrowthRecord = useCallback(async (record: Omit<GrowthRecord, 'id' | 'adg'>) => {
+    await addGrowthRecord(currentAnimal.id, record);
      // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
+
+  const handleUpdateGrowthRecord = useCallback(async (record: GrowthRecord) => {
+    await updateGrowthRecord(currentAnimal.id, record);
+    // Data will be re-fetched by the listener
+  }, [currentAnimal.id]);
+
+  const handleDeleteGrowthRecord = useCallback(async (record: GrowthRecord) => {
+    await deleteGrowthRecord(currentAnimal.id, record);
+    // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
   
   const handleUpdatePedigree = useCallback(async (data: { pedigree: Pedigree }) => {
@@ -193,7 +203,14 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 onDeleteLog={handleDeleteReproductionLog}
               />
             </TabsContent>
-            <TabsContent value="pertumbuhan"><GrowthTab animal={currentAnimal} onRecordAdded={handleAddGrowthRecord} /></TabsContent>
+            <TabsContent value="pertumbuhan">
+              <GrowthTab 
+                animal={currentAnimal} 
+                onAddRecord={handleAddGrowthRecord} 
+                onUpdateRecord={handleUpdateGrowthRecord}
+                onDeleteRecord={handleDeleteGrowthRecord}
+              />
+            </TabsContent>
             <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdatePedigree} /></TabsContent>
           </div>
         </Tabs>
