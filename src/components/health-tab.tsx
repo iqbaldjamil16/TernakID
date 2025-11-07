@@ -199,7 +199,7 @@ export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: Health
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Perlakuan</TableHead>
-                  <TableHead>Jenis Obat/Vaksin</TableHead>
+                  <TableHead>Terapi</TableHead>
                   <TableHead>Keterangan</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
