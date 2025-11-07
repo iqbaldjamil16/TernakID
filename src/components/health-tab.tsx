@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Pencil, Trash2 } from 'lucide-react';
+import { Save, Pencil } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Dialog,
@@ -21,17 +21,6 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { formatToYYYYMMDD } from '@/lib/utils';
 
 const healthLogSchema = z.object({
@@ -55,10 +44,9 @@ interface HealthTabProps {
   animal: Livestock;
   onAddLog: (log: Omit<HealthLog, 'id'>) => void;
   onUpdateLog: (log: HealthLog) => void;
-  onDeleteLog: (log: HealthLog) => void;
 }
 
-export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: HealthTabProps) {
+export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<HealthLog | null>(null);
@@ -119,15 +107,6 @@ export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: Health
     setEditingLog(log);
     setIsEditModalOpen(true);
   };
-
-  const handleDelete = (log: HealthLog) => {
-    onDeleteLog(log);
-    toast({
-      variant: 'destructive',
-      title: 'Dihapus',
-      description: 'Catatan kesehatan telah dihapus.',
-    });
-  }
 
   const sortedLog = [...animal.healthLog].sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -216,25 +195,6 @@ export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: Health
                         <Button variant="ghost" size="icon" onClick={() => openEditModal(log)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Anda yakin?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tindakan ini tidak dapat diurungkan. Ini akan menghapus catatan kesehatan secara permanen.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(log)}>Hapus</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                        </div>
                     </TableCell>
                   </TableRow>

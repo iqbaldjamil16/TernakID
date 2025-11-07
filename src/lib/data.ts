@@ -190,23 +190,6 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
   }
 };
 
-export const deleteHealthLog = async (animalId: string, logToDelete: HealthLog): Promise<void> => {
-  const { firestore } = initializeFirebase();
-  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
-  try {
-     await updateDoc(docRef, { healthLog: arrayRemove(logToDelete) });
-  } catch (e) {
-    const permissionError = new FirestorePermissionError({
-      path: docRef.path,
-      operation: 'update',
-      requestResourceData: { healthLog: [] }, // Approximation for the error log
-    });
-    console.error(permissionError.message);
-    errorEmitter.emit('permission-error', permissionError);
-    throw permissionError;
-  }
-};
-
 export const addReproductionLog = async (animalId: string, log: Omit<ReproductionLog, 'id'>): Promise<void> => {
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);

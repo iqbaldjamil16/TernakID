@@ -5,7 +5,6 @@ import {
   updateAnimal,
   addHealthLog,
   updateHealthLog,
-  deleteHealthLog,
   addReproductionLog,
   updateReproductionLog,
   deleteReproductionLog,
@@ -65,11 +64,6 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
   const handleUpdateHealthLog = useCallback(async (log: HealthLog) => {
     await updateHealthLog(currentAnimal.id, log);
     // Data will be re-fetched by the listener
-  }, [currentAnimal.id]);
-
-  const handleDeleteHealthLog = useCallback(async (log: HealthLog) => {
-    await deleteHealthLog(currentAnimal.id, log);
-     // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
   const handleAddReproductionLog = useCallback(async (log: Omit<ReproductionLog, 'id'>) => {
@@ -192,7 +186,6 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddLog={handleAddHealthLog} 
                 onUpdateLog={handleUpdateHealthLog}
-                onDeleteLog={handleDeleteHealthLog}
               />
             </TabsContent>
             <TabsContent value="reproduksi">
