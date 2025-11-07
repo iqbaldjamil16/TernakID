@@ -51,10 +51,9 @@ interface GrowthTabProps {
   animal: Livestock;
   onAddRecord: (record: Omit<GrowthRecord, 'id' | 'adg'>) => void;
   onUpdateRecord: (record: GrowthRecord) => void;
-  onDeleteRecord: (record: GrowthRecord) => void;
 }
 
-export function GrowthTab({ animal, onAddRecord, onUpdateRecord, onDeleteRecord }: GrowthTabProps) {
+export function GrowthTab({ animal, onAddRecord, onUpdateRecord }: GrowthTabProps) {
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<GrowthRecord | null>(null);
@@ -121,15 +120,6 @@ export function GrowthTab({ animal, onAddRecord, onUpdateRecord, onDeleteRecord 
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (record: GrowthRecord) => {
-    onDeleteRecord(record);
-    toast({
-        variant: 'destructive',
-        title: 'Dihapus',
-        description: 'Catatan pertumbuhan telah dihapus.',
-    });
-  };
-
   return (
     <div className="space-y-6">
       <Card>
@@ -192,25 +182,6 @@ export function GrowthTab({ animal, onAddRecord, onUpdateRecord, onDeleteRecord 
                         <Button variant="ghost" size="icon" onClick={() => openEditModal(record)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Anda yakin?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tindakan ini tidak dapat diurungkan. Ini akan menghapus catatan pertumbuhan secara permanen.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(record)}>Hapus</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                        </div>
                     </TableCell>
                   </TableRow>

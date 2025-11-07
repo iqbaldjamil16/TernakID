@@ -25,16 +25,16 @@ import { formatToYYYYMMDD } from '@/lib/utils';
 
 const healthLogSchema = z.object({
   date: z.string().min(1, 'Tanggal harus diisi.'),
-  type: z.enum(['Vaksinasi', 'Pengobatan', 'Lainnya']),
+  type: z.enum(['Vaksinasi', 'Pengobatan', 'Pemberian Vitamin', 'Lainnya']),
   detail: z.string().optional(),
   notes: z.string().optional(),
 }).refine(data => {
-    if ((data.type === 'Vaksinasi' || data.type === 'Pengobatan') && (!data.detail || data.detail.trim() === '')) {
+    if ((data.type === 'Vaksinasi' || data.type === 'Pengobatan' || data.type === 'Pemberian Vitamin') && (!data.detail || data.detail.trim() === '')) {
         return false;
     }
     return true;
 }, {
-    message: "Jenis Obat/Vaksin harus diisi untuk tipe Vaksinasi atau Pengobatan.",
+    message: "Jenis Obat/Vaksin/Vitamin harus diisi.",
     path: ['detail'],
 });
 
@@ -131,8 +131,9 @@ export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
                         <SelectValue placeholder="Pilih Jenis" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Vaksinasi">Vaksinasi</SelectItem>
                         <SelectItem value="Pengobatan">Pengobatan</SelectItem>
+                        <SelectItem value="Pemberian Vitamin">Pemberian Vitamin</SelectItem>
+                        <SelectItem value="Vaksinasi">Vaksinasi</SelectItem>
                         <SelectItem value="Lainnya">Lainnya</SelectItem>
                       </SelectContent>
                     </Select>
@@ -146,9 +147,9 @@ export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
               </div>
             </div>
             
-            {(selectedAddType === 'Vaksinasi' || selectedAddType === 'Pengobatan') && (
+            {(selectedAddType === 'Vaksinasi' || selectedAddType === 'Pengobatan' || selectedAddType === 'Pemberian Vitamin') && (
               <div>
-                <label>Jenis Obat/Vaksin</label>
+                <label>Terapi</label>
                 <Input placeholder="Cth : VetOxy La 5ml, Hematodin 3ml" {...addFormRegister('detail')} />
                 {addFormErrors.detail && <p className="text-destructive text-sm mt-1">{addFormErrors.detail.message}</p>}
               </div>
@@ -230,8 +231,9 @@ export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
                         <SelectValue placeholder="Pilih Jenis" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Vaksinasi">Vaksinasi</SelectItem>
                         <SelectItem value="Pengobatan">Pengobatan</SelectItem>
+                        <SelectItem value="Pemberian Vitamin">Pemberian Vitamin</SelectItem>
+                        <SelectItem value="Vaksinasi">Vaksinasi</SelectItem>
                         <SelectItem value="Lainnya">Lainnya</SelectItem>
                       </SelectContent>
                     </Select>
@@ -247,9 +249,9 @@ export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
                   {editFormErrors.date && <p className="text-destructive text-sm mt-1">{editFormErrors.date.message}</p>}
                 </div>
             </div>
-             {(selectedEditType === 'Vaksinasi' || selectedEditType === 'Pengobatan') && (
+             {(selectedEditType === 'Vaksinasi' || selectedEditType === 'Pengobatan' || selectedEditType === 'Pemberian Vitamin') && (
               <div>
-                <label>Jenis Obat/Vaksin</label>
+                <label>Terapi</label>
                 <Input placeholder="Cth : VetOxy La 5ml, Hematodin 3ml" {...editFormRegister('detail')} />
                 {editFormErrors.detail && <p className="text-destructive text-sm mt-1">{editFormErrors.detail.message}</p>}
               </div>

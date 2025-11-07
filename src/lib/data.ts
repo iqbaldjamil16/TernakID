@@ -90,13 +90,14 @@ export function listenToAnimals(callback: (animals: Livestock[]) => void): () =>
   const unsubscribe = onSnapshot(livestockCollectionRef, (snapshot) => {
     const animals = snapshot.docs.map(doc => {
         const data = doc.data();
+        const now = Date.now();
         return {
             id: doc.id,
             ...data,
             birthDate: data.birthDate?.toDate ? data.birthDate.toDate() : new Date(data.birthDate),
-            healthLog: (data.healthLog || []).map((log: any) => ({...log, id: log.id || `hl_${log.date.seconds}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
-            reproductionLog: (data.reproductionLog || []).map((log: any) => ({...log, id: log.id || `rl_${log.date.seconds}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
-            growthRecords: (data.growthRecords || []).map((rec: any) => ({...rec, id: rec.id || `gr_${rec.date.seconds}`, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
+            healthLog: (data.healthLog || []).map((log: any, index: number) => ({...log, id: log.id || `hl_${now}_${index}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+            reproductionLog: (data.reproductionLog || []).map((log: any, index: number) => ({...log, id: log.id || `rl_${now}_${index}`, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)})),
+            growthRecords: (data.growthRecords || []).map((rec: any, index: number) => ({...rec, id: rec.id || `gr_${now}_${index}`, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)})),
         } as Livestock;
     });
     callback(animals);
@@ -291,56 +292,4 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
     throw permissionError;
   }
 };
-
-export const deleteGrowthRecord = async (animalId: string, recordToDelete: GrowthRecord): Promise<void> => {
-  const { firestore } = initializeFirebase();
-  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
-  
-  // The object to remove needs to be an exact match, including the date object type.
-  const recordToRemove = {
-    ...recordToDelete,
-    date: new Date(recordToDelete.date), // ensure it's a JS Date
-    adg: undefined // adg is a calculated field and not stored
-  };
-  delete (recordToRemove as Partial<typeof recordToRemove>).adg;
-  
-  try {
-     await runTransaction(firestore, async (transaction) => {
-        const animalDoc = await transaction.get(docRef);
-        if (!animalDoc.exists()) {
-            throw "Document does not exist!";
-        }
-
-        const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({
-            ...rec,
-            date: rec.date.toDate() // Ensure all dates are JS Dates for comparison
-        }));
-        
-        const recordIndex = currentRecords.findIndex(rec => rec.id === recordToDelete.id);
-
-        if (recordIndex > -1) {
-            currentRecords.splice(recordIndex, 1);
-            transaction.update(docRef, { growthRecords: currentRecords });
-        } else {
-             // Fallback for older data without IDs
-            const recordsToKeep = currentRecords.filter(rec => !(rec.date.getTime() === recordToDelete.date.getTime() && rec.weight === recordToDelete.weight));
-            if(recordsToKeep.length < currentRecords.length) {
-                 transaction.update(docRef, { growthRecords: recordsToKeep });
-            } else {
-                console.warn("Could not find record to delete:", recordToDelete);
-            }
-        }
-    });
-  } catch (e) {
-    const permissionError = new FirestorePermissionError({
-      path: docRef.path,
-      operation: 'update',
-      requestResourceData: { growthRecords: [] }, // Approximation
-    });
-    console.error(permissionError.message);
-    errorEmitter.emit('permission-error', permissionError);
-    throw permissionError;
-  }
-};
-
     

@@ -9,7 +9,6 @@ import {
   updateReproductionLog,
   addGrowthRecord,
   updateGrowthRecord,
-  deleteGrowthRecord,
   updateAnimalPhoto,
 } from '@/lib/data';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord, Pedigree } from '@/lib/types';
@@ -85,11 +84,6 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
 
-  const handleDeleteGrowthRecord = useCallback(async (record: GrowthRecord) => {
-    await deleteGrowthRecord(currentAnimal.id, record);
-    // Data will be re-fetched by the listener
-  }, [currentAnimal.id]);
-  
   const handleUpdatePedigree = useCallback(async (data: { pedigree: Pedigree }) => {
     await updateAnimal(currentAnimal.id, { pedigree: data.pedigree });
      // Data will be re-fetched by the listener
@@ -134,8 +128,8 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 </div>
               </DialogTrigger>
               <DialogContent className="p-0 max-w-xl bg-transparent border-0">
-                <DialogHeader className="sr-only">
-                  <DialogTitle>Foto Ternak: {currentAnimal.name}</DialogTitle>
+                <DialogHeader>
+                  <DialogTitle className="sr-only">Foto Ternak: {currentAnimal.name}</DialogTitle>
                 </DialogHeader>
                 <Image
                   src={photoSrc}
@@ -194,7 +188,6 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddRecord={handleAddGrowthRecord} 
                 onUpdateRecord={handleUpdateGrowthRecord}
-                onDeleteRecord={handleDeleteGrowthRecord}
               />
             </TabsContent>
             <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdatePedigree} /></TabsContent>
