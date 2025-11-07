@@ -44,9 +44,10 @@ interface HealthTabProps {
   animal: Livestock;
   onAddLog: (log: Omit<HealthLog, 'id'>) => void;
   onUpdateLog: (log: HealthLog) => void;
+  onDeleteLog: (logId: string) => void;
 }
 
-export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
+export function HealthTab({ animal, onAddLog, onUpdateLog, onDeleteLog }: HealthTabProps) {
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<HealthLog | null>(null);
@@ -186,7 +187,7 @@ export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
               </TableHeader>
               <TableBody>
                 {sortedLog.length > 0 ? sortedLog.map((log, index) => (
-                  <TableRow key={log.id || index}>
+                  <TableRow key={`${log.id}-${index}`}>
                     <TableCell>{log.date.toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>{log.type}</TableCell>
                     <TableCell>{log.detail || '-'}</TableCell>
