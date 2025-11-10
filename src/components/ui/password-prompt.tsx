@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
 // The password is hardcoded here for simplicity as requested.
-const CORRECT_PASSWORD = '12345';
+const CORRECT_PASSWORD = 'kit321';
 
 interface PasswordPromptProps {
   isOpen: boolean;
