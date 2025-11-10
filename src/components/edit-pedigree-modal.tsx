@@ -104,7 +104,10 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
           offspring: isNaN(offspringAsNumber) || offspringAsNumber === 0 ? undefined : offspringAsNumber
         };
     } else {
-        processedData = data;
+        // Explicitly handle sire data to ensure 'offspring' is not included
+        const sireData = data as Partial<Sire> & { offspring?: any };
+        delete sireData.offspring; // Remove the offending key
+        processedData = sireData;
     }
     
     onSave(processedData);
