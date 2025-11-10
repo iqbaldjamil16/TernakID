@@ -35,7 +35,9 @@ const sireSchema = z.object({
   characteristics: z.string().optional(),
 });
 
-type FormData = z.infer<typeof damSchema> | z.infer<typeof sireSchema>;
+// The form can contain fields from both schemas.
+const combinedSchema = damSchema.merge(sireSchema);
+type FormData = z.infer<typeof combinedSchema>;
 
 
 interface EditPedigreeModalProps {
@@ -44,47 +46,55 @@ interface EditPedigreeModalProps {
   entityType: 'dam' | 'sire';
   entity: Partial<Dam> | Partial<Sire>;
   onSave: (data: Partial<Dam> | Partial<Sire>) => void;
-  setGetFormDataRef: MutableRefObject<() => Dam | Sire | {}>;
+  setGetFormDataRef: MutableRefObject<() => Partial<Dam> | Partial<Sire>>;
 }
 
 export default function EditPedigreeModal({ isOpen, onClose, entityType, entity, onSave, setGetFormDataRef }: EditPedigreeModalProps) {
   const isDam = entityType === 'dam';
-  const schema = isDam ? damSchema : sireSchema;
   const { toast } = useToast();
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(entity.photoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, reset, getValues, formState: { isSubmitting } } = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: isDam ? {
+  const { register, handleSubmit, reset, getValues, formState: { isSubmitting } } = useForm<FormData>({
+    resolver: zodResolver(combinedSchema),
+    defaultValues: {
         ...entity,
         offspring: 'offspring' in entity ? entity.offspring || undefined : undefined,
-    } : {
-        name: 'name' in entity ? entity.name : undefined,
-        semenId: 'semenId' in entity ? entity.semenId : undefined,
-        breed: 'breed' in entity ? entity.breed : undefined,
-        characteristics: 'characteristics' in entity ? entity.characteristics : undefined,
     },
   });
 
+  // This ref allows the parent component (pedigree-tab) to get the current form data,
+  // which is crucial for merging photo uploads with existing text data.
   useEffect(() => {
-    // Set the ref to a function that can be called by the parent to get current form values
-    setGetFormDataRef.current = () => getValues();
-  }, [getValues, setGetFormDataRef]);
+    setGetFormDataRef.current = () => {
+        const values = getValues();
+        if (isDam) {
+            const offspringNum = values.offspring ? Number(values.offspring) : undefined;
+            return {
+                name: values.name,
+                regId: values.regId,
+                breed: values.breed,
+                offspring: isNaN(offspringNum as number) ? undefined : offspringNum,
+            };
+        } else {
+            return {
+                name: values.name,
+                semenId: values.semenId,
+                breed: values.breed,
+                characteristics: values.characteristics,
+            };
+        }
+    };
+  }, [getValues, setGetFormDataRef, isDam]);
 
   useEffect(() => {
-    reset(isDam ? {
-        ...entity,
-        offspring: 'offspring' in entity ? entity.offspring || undefined : undefined,
-    } : {
-        name: 'name' in entity ? entity.name : undefined,
-        semenId: 'semenId' in entity ? entity.semenId : undefined,
-        breed: 'breed' in entity ? entity.breed : undefined,
-        characteristics: 'characteristics' in entity ? entity.characteristics : undefined,
+    reset({
+      ...entity,
+      offspring: 'offspring' in entity ? entity.offspring || undefined : undefined,
     });
     setPhotoPreview(entity.photoUrl || null);
-  }, [entity, reset, isDam]);
+  }, [entity, reset]);
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -108,20 +118,20 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
     let processedData: Partial<Dam> | Partial<Sire>;
 
     if (isDam) {
-        const damData = data as Partial<Dam>;
-        const offspringAsNumber = damData.offspring ? Number(damData.offspring) : undefined;
+        const offspringAsNumber = data.offspring ? Number(data.offspring) : undefined;
         processedData = {
-          ...damData,
-          offspring: isNaN(offspringAsNumber as number) ? undefined : offspringAsNumber
+          name: data.name,
+          regId: data.regId,
+          breed: data.breed,
+          offspring: isNaN(offspringAsNumber as number) ? undefined : offspringAsNumber,
         };
     } else {
         // Explicitly construct the sire data to ensure 'offspring' is never included.
-        const sireData = data as Partial<Sire>;
         processedData = {
-            name: sireData.name,
-            semenId: sireData.semenId,
-            breed: sireData.breed,
-            characteristics: sireData.characteristics
+            name: data.name,
+            semenId: data.semenId,
+            breed: data.breed,
+            characteristics: data.characteristics
         };
     }
     
