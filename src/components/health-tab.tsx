@@ -44,9 +44,10 @@ interface HealthTabProps {
   animal: Livestock;
   onAddLog: (log: Omit<HealthLog, 'id'>) => void;
   onUpdateLog: (log: HealthLog) => void;
+  withPasswordProtection: (action: () => void) => void;
 }
 
-export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
+export function HealthTab({ animal, onAddLog, onUpdateLog, withPasswordProtection }: HealthTabProps) {
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<HealthLog | null>(null);
@@ -75,37 +76,47 @@ export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
   }, [editingLog, resetEditForm]);
 
   const onAddSubmit = (data: HealthLogFormData) => {
-    const newLog = {
-      ...data,
-      date: new Date(data.date),
+    const saveAction = () => {
+      const newLog = {
+        ...data,
+        date: new Date(data.date),
+      };
+      onAddLog(newLog);
+      toast({
+        title: 'Sukses',
+        description: 'Catatan kesehatan berhasil disimpan.',
+      });
+      resetAddForm({ type: 'Vaksinasi', notes: '', detail: '', date: formatToYYYYMMDD(new Date()) });
     };
-    onAddLog(newLog);
-    toast({
-      title: 'Sukses',
-      description: 'Catatan kesehatan berhasil disimpan.',
-    });
-    resetAddForm({ type: 'Vaksinasi', notes: '', detail: '', date: formatToYYYYMMDD(new Date()) });
+    withPasswordProtection(saveAction);
   };
   
   const onEditSubmit = (data: HealthLogFormData) => {
-    if (!editingLog) return;
-    const updatedLog = {
-      ...editingLog,
-      ...data,
-      date: new Date(data.date),
+    const saveAction = () => {
+      if (!editingLog) return;
+      const updatedLog = {
+        ...editingLog,
+        ...data,
+        date: new Date(data.date),
+      };
+      onUpdateLog(updatedLog);
+      toast({
+        title: 'Sukses',
+        description: 'Catatan kesehatan berhasil diperbarui.',
+      });
+      setIsEditModalOpen(false);
+      setEditingLog(null);
     };
-    onUpdateLog(updatedLog);
-    toast({
-      title: 'Sukses',
-      description: 'Catatan kesehatan berhasil diperbarui.',
-    });
-    setIsEditModalOpen(false);
-    setEditingLog(null);
+    withPasswordProtection(saveAction);
   };
 
   const openEditModal = (log: HealthLog) => {
     setEditingLog(log);
     setIsEditModalOpen(true);
+  };
+  
+  const triggerEditSubmit = () => {
+      handleEditSubmit(onEditSubmit)();
   };
 
   const sortedLog = [...animal.healthLog].sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -218,7 +229,7 @@ export function HealthTab({ animal, onAddLog, onUpdateLog }: HealthTabProps) {
           <DialogHeader>
             <DialogTitle>Edit Catatan Kesehatan</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleEditSubmit(onEditSubmit)} className="space-y-4 py-4">
+          <form onSubmit={(e) => { e.preventDefault(); triggerEditSubmit(); }} className="space-y-4 py-4">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label>Jenis Catatan</label>

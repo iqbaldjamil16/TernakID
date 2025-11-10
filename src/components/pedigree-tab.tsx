@@ -18,9 +18,10 @@ import {
 interface PedigreeTabProps {
   animal: Livestock;
   onUpdate: (data: { pedigree: Pedigree }) => void;
+  withPasswordProtection: (action: () => void) => void;
 }
 
-export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
+export function PedigreeTab({ animal, onUpdate, withPasswordProtection }: PedigreeTabProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntity, setEditingEntity] = useState<'dam' | 'sire' | null>(null);
   
@@ -32,8 +33,10 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
 
 
   const handleOpenModal = (entityType: 'dam' | 'sire') => {
-    setEditingEntity(entityType);
-    setIsModalOpen(true);
+    withPasswordProtection(() => {
+        setEditingEntity(entityType);
+        setIsModalOpen(true);
+    });
   };
 
   const handleCloseModal = () => {
@@ -180,6 +183,7 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
             entity={entityToEdit}
             onSave={handleSave}
             setGetFormDataRef={getFormDataRef}
+            withPasswordProtection={withPasswordProtection}
         />
       )}
     </div>

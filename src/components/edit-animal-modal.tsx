@@ -41,9 +41,10 @@ interface EditAnimalModalProps {
   animal: Livestock;
   onSave: (data: Partial<Omit<Livestock, 'id' | 'photoUrl'>>) => void;
   onSavePhoto: (photoUrl: string) => void;
+  withPasswordProtection: (action: () => void) => void;
 }
 
-export default function EditAnimalModal({ isOpen, onClose, animal, onSave, onSavePhoto }: EditAnimalModalProps) {
+export default function EditAnimalModal({ isOpen, onClose, animal, onSave, onSavePhoto, withPasswordProtection }: EditAnimalModalProps) {
   const { toast } = useToast();
   const [photoPreview, setPhotoPreview] = useState<string | null>(animal.photoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,30 +83,43 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave, onSav
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
-        setPhotoPreview(dataUrl); // Optimistically update preview
-        onSavePhoto(dataUrl); // Immediately save photo to the database
-        toast({
-          title: "Foto Diperbarui",
-          description: "Foto ternak baru sedang disimpan secara permanen.",
-        });
+        
+        const saveAction = () => {
+            setPhotoPreview(dataUrl); // Optimistically update preview
+            onSavePhoto(dataUrl); // Immediately save photo to the database
+            toast({
+              title: "Foto Diperbarui",
+              description: "Foto ternak baru sedang disimpan secara permanen.",
+            });
+        };
+
+        withPasswordProtection(saveAction);
       };
       reader.readAsDataURL(file);
     }
   };
 
   const onSubmit = (data: EditFormData) => {
-    const updatedData: Partial<Omit<Livestock, 'id'>> = {
-      ...data,
-      birthDate: new Date(data.birthDate),
+    const saveAction = () => {
+        const updatedData: Partial<Omit<Livestock, 'id'>> = {
+          ...data,
+          birthDate: new Date(data.birthDate),
+        };
+
+        onSave(updatedData);
+        toast({
+          title: 'Perubahan Disimpan',
+          description: `Detail teks untuk ${animal.name} berhasil diperbarui.`,
+        });
+        onClose();
     };
 
-    onSave(updatedData);
-    toast({
-      title: 'Perubahan Disimpan',
-      description: `Detail teks untuk ${animal.name} berhasil diperbarui.`,
-    });
-    onClose();
+    withPasswordProtection(saveAction);
   };
+  
+  const triggerSubmit = () => {
+      handleSubmit(onSubmit)();
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -113,7 +127,7 @@ export default function EditAnimalModal({ isOpen, onClose, animal, onSave, onSav
         <DialogHeader>
           <DialogTitle>Edit Detail Identitas Ternak</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={(e) => { e.preventDefault(); triggerSubmit(); }}>
           <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
             <div className="flex flex-col items-center gap-4">
               <Image

@@ -35,7 +35,14 @@ const sireSchema = z.object({
   characteristics: z.string().optional(),
 });
 
-const combinedSchema = damSchema.merge(sireSchema);
+const combinedSchema = z.object({
+  name: z.string().optional(),
+  regId: z.string().optional(),
+  breed: z.string().optional(),
+  offspring: z.union([z.string(), z.number()]).optional(),
+  semenId: z.string().optional(),
+  characteristics: z.string().optional(),
+});
 type FormData = z.infer<typeof combinedSchema>;
 
 
@@ -46,9 +53,10 @@ interface EditPedigreeModalProps {
   entity: Partial<Dam> | Partial<Sire>;
   onSave: (data: Partial<Dam> | Partial<Sire>) => void;
   setGetFormDataRef: MutableRefObject<() => Partial<Dam> | Partial<Sire>>;
+  withPasswordProtection: (action: () => void) => void;
 }
 
-export default function EditPedigreeModal({ isOpen, onClose, entityType, entity, onSave, setGetFormDataRef }: EditPedigreeModalProps) {
+export default function EditPedigreeModal({ isOpen, onClose, entityType, entity, onSave, setGetFormDataRef, withPasswordProtection }: EditPedigreeModalProps) {
   const isDam = entityType === 'dam';
   const { toast } = useToast();
 
@@ -56,7 +64,7 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { register, handleSubmit, reset, getValues, formState: { isSubmitting } } = useForm<FormData>({
-    resolver: zodResolver(combinedSchema),
+    resolver: zodResolver(isDam ? damSchema : sireSchema),
     defaultValues: {
         ...entity,
         offspring: 'offspring' in entity ? entity.offspring || undefined : undefined,
@@ -99,13 +107,17 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
-        setPhotoPreview(dataUrl); // Optimistic UI update
-        // Immediately save the photo data, which triggers the parent's handleSave
-        onSave({ photoUrl: dataUrl });
-        toast({
-          title: "Foto Diperbarui",
-          description: "Foto baru sedang disimpan secara permanen.",
-        });
+        
+        const saveAction = () => {
+            setPhotoPreview(dataUrl); // Optimistic UI update
+            // Immediately save the photo data, which triggers the parent's handleSave
+            onSave({ photoUrl: dataUrl });
+            toast({
+              title: "Foto Diperbarui",
+              description: "Foto baru sedang disimpan secara permanen.",
+            });
+        };
+        withPasswordProtection(saveAction);
       };
       reader.readAsDataURL(file);
     }
@@ -113,34 +125,40 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
 
   // This function now only handles text form submission
   const onSubmit = (data: FormData) => {
-    let processedData: Partial<Dam> | Partial<Sire>;
+    const saveAction = () => {
+        let processedData: Partial<Dam> | Partial<Sire>;
 
-    if (isDam) {
-        const offspringAsNumber = data.offspring ? Number(data.offspring) : undefined;
-        processedData = {
-          name: data.name,
-          regId: data.regId,
-          breed: data.breed,
-          offspring: isNaN(offspringAsNumber as number) ? undefined : offspringAsNumber,
-        };
-    } else {
-        processedData = {
-            name: data.name,
-            semenId: data.semenId,
-            breed: data.breed,
-            characteristics: data.characteristics
-        };
-    }
-    
-    // onSave will merge this text data with any existing data (like a photoUrl)
-    onSave(processedData);
-    
-    toast({
-        title: 'Sukses',
-        description: `Data teks untuk ${isDam ? 'Induk' : 'Pejantan'} berhasil diperbarui.`,
-    });
-    onClose();
+        if (isDam) {
+            const offspringAsNumber = data.offspring ? Number(data.offspring) : undefined;
+            processedData = {
+              name: data.name,
+              regId: data.regId,
+              breed: data.breed,
+              offspring: isNaN(offspringAsNumber as number) ? undefined : offspringAsNumber,
+            };
+        } else {
+            processedData = {
+                name: data.name,
+                semenId: data.semenId,
+                breed: data.breed,
+                characteristics: data.characteristics
+            };
+        }
+        
+        onSave(processedData);
+        
+        toast({
+            title: 'Sukses',
+            description: `Data teks untuk ${isDam ? 'Induk' : 'Pejantan'} berhasil diperbarui.`,
+        });
+        onClose();
+    };
+    withPasswordProtection(saveAction);
   };
+  
+  const triggerSubmit = () => {
+      handleSubmit(onSubmit)();
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -148,7 +166,7 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
         <DialogHeader>
           <DialogTitle>Edit Data {isDam ? 'Induk (Dam)' : 'Pejantan (Sire)'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={(e) => { e.preventDefault(); triggerSubmit(); }}>
           <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
              <div className="flex flex-col items-center gap-4">
                <Image

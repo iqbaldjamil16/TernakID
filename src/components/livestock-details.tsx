@@ -26,15 +26,32 @@ import { PedigreeTab } from './pedigree-tab';
 import EditAnimalModal from './edit-animal-modal';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
+import { PasswordPrompt } from '@/components/ui/password-prompt';
 
 export default function LivestockDetails({ animal }: { animal: Livestock }) {
   const [currentAnimal, setCurrentAnimal] = useState<Livestock>(animal);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
+  const [isPasswordPromptOpen, setIsPasswordPromptOpen] = useState(false);
+  const [passwordAction, setPasswordAction] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     setCurrentAnimal(animal);
   }, [animal]);
+
+  const withPasswordProtection = (action: () => void) => {
+    setPasswordAction(() => action);
+    setIsPasswordPromptOpen(true);
+  };
+  
+  const handlePasswordConfirm = () => {
+    if (passwordAction) {
+      passwordAction();
+    }
+    setIsPasswordPromptOpen(false);
+    setPasswordAction(null);
+  };
+
 
   const handleUpdate = useCallback(async (updatedData: Partial<Omit<Livestock, 'id' | 'photoUrl'>>) => {
     // Only handles text data now
@@ -107,7 +124,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
             </div>
             <div className="hidden sm:flex items-center gap-4 flex-shrink-0">
               <Badge variant="secondary" className="bg-white text-primary hover:bg-white">{currentAnimal.status}</Badge>
-              <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
+              <Button size="sm" variant="secondary" onClick={() => withPasswordProtection(() => setIsModalOpen(true))} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
                   <Pencil className="mr-2 h-4 w-4" /> Edit
               </Button>
             </div>
@@ -146,7 +163,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
               <p className="text-lg font-semibold mt-1">{currentAnimal.breed}, {currentAnimal.gender}</p>
                <div className="mt-4 flex flex-wrap gap-2 items-center justify-center sm:justify-start sm:hidden">
                   <Badge variant="secondary" className="bg-white text-primary hover:bg-white">{currentAnimal.status}</Badge>
-                  <Button size="sm" variant="secondary" onClick={() => setIsModalOpen(true)} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
+                   <Button size="sm" variant="secondary" onClick={() => withPasswordProtection(() => setIsModalOpen(true))} className="bg-yellow-400 text-gray-900 hover:bg-yellow-500">
                     <Pencil className="mr-2 h-4 w-4" /> Edit
                   </Button>
                </div>
@@ -174,6 +191,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddLog={handleAddHealthLog} 
                 onUpdateLog={handleUpdateHealthLog}
+                withPasswordProtection={withPasswordProtection}
               />
             </TabsContent>
             <TabsContent value="reproduksi">
@@ -181,6 +199,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddLog={handleAddReproductionLog}
                 onUpdateLog={handleUpdateReproductionLog}
+                withPasswordProtection={withPasswordProtection}
               />
             </TabsContent>
             <TabsContent value="pertumbuhan">
@@ -188,9 +207,16 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddRecord={handleAddGrowthRecord} 
                 onUpdateRecord={handleUpdateGrowthRecord}
+                withPasswordProtection={withPasswordProtection}
               />
             </TabsContent>
-            <TabsContent value="silsilah"><PedigreeTab animal={currentAnimal} onUpdate={handleUpdatePedigree} /></TabsContent>
+            <TabsContent value="silsilah">
+              <PedigreeTab 
+                animal={currentAnimal} 
+                onUpdate={handleUpdatePedigree}
+                withPasswordProtection={withPasswordProtection} 
+              />
+            </TabsContent>
           </div>
         </Tabs>
       </div>
@@ -201,8 +227,14 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
           animal={currentAnimal}
           onSave={handleUpdate}
           onSavePhoto={handleSavePhoto}
+          withPasswordProtection={withPasswordProtection}
         />
       )}
+      <PasswordPrompt
+        isOpen={isPasswordPromptOpen}
+        onClose={() => setIsPasswordPromptOpen(false)}
+        onConfirm={handlePasswordConfirm}
+      />
     </>
   );
 }

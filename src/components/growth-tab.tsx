@@ -51,9 +51,10 @@ interface GrowthTabProps {
   animal: Livestock;
   onAddRecord: (record: Omit<GrowthRecord, 'id' | 'adg'>) => void;
   onUpdateRecord: (record: GrowthRecord) => void;
+  withPasswordProtection: (action: () => void) => void;
 }
 
-export function GrowthTab({ animal, onAddRecord, onUpdateRecord }: GrowthTabProps) {
+export function GrowthTab({ animal, onAddRecord, onUpdateRecord, withPasswordProtection }: GrowthTabProps) {
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<GrowthRecord | null>(null);
@@ -83,41 +84,51 @@ export function GrowthTab({ animal, onAddRecord, onUpdateRecord }: GrowthTabProp
 
 
   const onAddSubmit = (data: AddRecordFormData) => {
-    if (latestWeight > 0 && data.weight <= latestWeight) {
-        toast({
-            variant: "destructive",
-            title: "Input Bobot Tidak Valid",
-            description: `Bobot baru harus lebih besar dari bobot terakhir (${latestWeight} kg).`,
-        });
-        return;
-    }
-    onAddRecord({ weight: data.weight, date: new Date(data.date) });
-    toast({
-      title: 'Sukses',
-      description: `Bobot ${data.weight} kg berhasil disimpan.`,
-    });
-    resetAddForm({ date: formatToYYYYMMDD(new Date()), weight: undefined });
+    const saveAction = () => {
+      if (latestWeight > 0 && data.weight <= latestWeight) {
+          toast({
+              variant: "destructive",
+              title: "Input Bobot Tidak Valid",
+              description: `Bobot baru harus lebih besar dari bobot terakhir (${latestWeight} kg).`,
+          });
+          return;
+      }
+      onAddRecord({ weight: data.weight, date: new Date(data.date) });
+      toast({
+        title: 'Sukses',
+        description: `Bobot ${data.weight} kg berhasil disimpan.`,
+      });
+      resetAddForm({ date: formatToYYYYMMDD(new Date()), weight: undefined });
+    };
+    withPasswordProtection(saveAction);
   };
 
   const onEditSubmit = (data: EditRecordFormData) => {
-    if (!editingRecord) return;
-    const updatedRecord: GrowthRecord = {
-        ...editingRecord,
-        ...data,
-        date: new Date(data.date)
+    const saveAction = () => {
+      if (!editingRecord) return;
+      const updatedRecord: GrowthRecord = {
+          ...editingRecord,
+          ...data,
+          date: new Date(data.date)
+      };
+      onUpdateRecord(updatedRecord);
+      toast({
+          title: 'Sukses',
+          description: 'Catatan pertumbuhan berhasil diperbarui.',
+      });
+      setIsEditModalOpen(false);
+      setEditingRecord(null);
     };
-    onUpdateRecord(updatedRecord);
-    toast({
-        title: 'Sukses',
-        description: 'Catatan pertumbuhan berhasil diperbarui.',
-    });
-    setIsEditModalOpen(false);
-    setEditingRecord(null);
+    withPasswordProtection(saveAction);
   };
 
   const openEditModal = (record: GrowthRecord) => {
     setEditingRecord(record);
     setIsEditModalOpen(true);
+  };
+  
+  const triggerEditSubmit = () => {
+      handleEditSubmit(onEditSubmit)();
   };
 
   return (
@@ -204,7 +215,7 @@ export function GrowthTab({ animal, onAddRecord, onUpdateRecord }: GrowthTabProp
           <DialogHeader>
             <DialogTitle>Edit Catatan Pertumbuhan</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleEditSubmit(onEditSubmit)} className="space-y-4 py-4">
+          <form onSubmit={(e) => {e.preventDefault(); triggerEditSubmit(); }} className="space-y-4 py-4">
              <div>
                 <label>Tanggal Timbang</label>
                 <Input type="date" {...editFormRegister('date')} />
