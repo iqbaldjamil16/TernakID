@@ -88,7 +88,7 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
     // Exclude photoUrl from the main text save, as it's handled separately
     const { photoUrl, ...textData } = data;
     
-    let processedData: Partial<Dam> | Partial<Sire> = textData;
+    let processedData: Partial<Dam> | Partial<Sire>;
 
     if (isDam) {
         const offspringAsNumber = Number((textData as DamFormData).offspring);
@@ -96,6 +96,8 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
           ...textData,
           offspring: isNaN(offspringAsNumber) || offspringAsNumber === 0 ? undefined : offspringAsNumber
         };
+    } else {
+        processedData = textData;
     }
     
     onSave(processedData);
