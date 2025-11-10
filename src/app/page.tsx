@@ -19,18 +19,15 @@ export default function Home() {
         // We don't need to show a loading state here, as the listener
         // will automatically receive the new data once it's created.
         createDefaultAnimals().catch(console.error);
+      } else {
+         // If no animal is selected, or the selected one is no longer in the list,
+        // default to selecting the first animal.
+        if (!selectedAnimalId || !animals.some(a => a.id === selectedAnimalId)) {
+          setSelectedAnimalId(animals[0].id);
+        }
       }
       
       setAllAnimals(animals);
-
-      // If no animal is selected, or the selected one is no longer in the list,
-      // default to selecting the first animal.
-      if (animals.length > 0 && (!selectedAnimalId || !animals.some(a => a.id === selectedAnimalId))) {
-        setSelectedAnimalId(animals[0].id);
-      } else if (animals.length === 0) {
-        // If there are no animals at all, clear the selection.
-        setSelectedAnimalId(null);
-      }
     });
 
     // Cleanup the listener when the component unmounts.
