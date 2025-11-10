@@ -57,9 +57,14 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
 
   const { register, handleSubmit, reset, getValues, formState: { isSubmitting } } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: {
+    defaultValues: isDam ? {
         ...entity,
         offspring: 'offspring' in entity ? entity.offspring || undefined : undefined,
+    } : {
+        name: 'name' in entity ? entity.name : undefined,
+        semenId: 'semenId' in entity ? entity.semenId : undefined,
+        breed: 'breed' in entity ? entity.breed : undefined,
+        characteristics: 'characteristics' in entity ? entity.characteristics : undefined,
     },
   });
 
@@ -69,12 +74,17 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
   }, [getValues, setGetFormDataRef]);
 
   useEffect(() => {
-    reset({
+    reset(isDam ? {
         ...entity,
         offspring: 'offspring' in entity ? entity.offspring || undefined : undefined,
+    } : {
+        name: 'name' in entity ? entity.name : undefined,
+        semenId: 'semenId' in entity ? entity.semenId : undefined,
+        breed: 'breed' in entity ? entity.breed : undefined,
+        characteristics: 'characteristics' in entity ? entity.characteristics : undefined,
     });
     setPhotoPreview(entity.photoUrl || null);
-  }, [entity, reset]);
+  }, [entity, reset, isDam]);
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -98,10 +108,11 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
     let processedData: Partial<Dam> | Partial<Sire>;
 
     if (isDam) {
-        const offspringAsNumber = Number((data as Dam).offspring);
+        const damData = data as Partial<Dam>;
+        const offspringAsNumber = damData.offspring ? Number(damData.offspring) : undefined;
         processedData = {
-          ...data,
-          offspring: isNaN(offspringAsNumber) || offspringAsNumber === 0 ? undefined : offspringAsNumber
+          ...damData,
+          offspring: isNaN(offspringAsNumber as number) ? undefined : offspringAsNumber
         };
     } else {
         // Explicitly construct the sire data to ensure 'offspring' is never included.
