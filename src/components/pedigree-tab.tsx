@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Livestock, Pedigree, Dam, Sire } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -25,6 +25,10 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntity, setEditingEntity] = useState<'dam' | 'sire' | null>(null);
+  
+  // Create a ref to hold a function that can get the current form data
+  const getFormDataRef = useRef<() => Dam | Sire | {}>(() => ({}));
+
 
   const handleOpenModal = (entityType: 'dam' | 'sire') => {
     setEditingEntity(entityType);
@@ -39,26 +43,21 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
   const handleSave = (updatedData: Partial<Dam> | Partial<Sire>) => {
     if (!editingEntity) return;
 
-    const currentEntityData = animal.pedigree?.[editingEntity] || {};
+    // Get the latest form data using the function from the ref,
+    // and combine it with the partial update (e.g., from a photo upload).
+    const currentFormData = getFormDataRef.current();
+    const finalData = { ...currentFormData, ...updatedData };
     
-    // Merge existing data with updated data
-    const finalData = { ...currentEntityData, ...updatedData };
-
     const updatedPedigree = {
       ...animal.pedigree,
       [editingEntity]: finalData,
     };
     
     onUpdate({ pedigree: updatedPedigree as Pedigree });
-    toast({
-        title: 'Sukses',
-        description: `Data ${editingEntity === 'dam' ? 'Induk' : 'Pejantan'} berhasil diperbarui.`,
-    });
+    // Toast is now more general since this function handles both text and photo saves.
     handleCloseModal();
   };
 
-  const dam = animal.pedigree?.dam;
-  const sire = animal.pedigree?.sire;
   const entityToEdit = editingEntity ? (animal.pedigree?.[editingEntity] || {}) : {};
 
   return (
@@ -168,6 +167,7 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
             entityType={editingEntity}
             entity={entityToEdit}
             onSave={handleSave}
+            setGetFormDataRef={getFormDataRef}
         />
       )}
     </div>

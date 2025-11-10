@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, MutableRefObject } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,7 +26,6 @@ const damSchema = z.object({
   regId: z.string().optional(),
   breed: z.string().optional(),
   offspring: z.number().optional(),
-  photoUrl: z.string().optional(), // Now expecting a string, possibly a data URI
 });
 
 const sireSchema = z.object({
@@ -34,11 +33,10 @@ const sireSchema = z.object({
   semenId: z.string().optional(),
   breed: z.string().optional(),
   characteristics: z.string().optional(),
-  photoUrl: z.string().optional(),
 });
 
-type DamFormData = z.infer<typeof damSchema>;
-type SireFormData = z.infer<typeof sireSchema>;
+type FormData = z.infer<typeof damSchema> | z.infer<typeof sireSchema>;
+
 
 interface EditPedigreeModalProps {
   isOpen: boolean;
@@ -46,9 +44,10 @@ interface EditPedigreeModalProps {
   entityType: 'dam' | 'sire';
   entity: Partial<Dam> | Partial<Sire>;
   onSave: (data: Partial<Dam> | Partial<Sire>) => void;
+  setGetFormDataRef: MutableRefObject<() => Dam | Sire | {}>;
 }
 
-export default function EditPedigreeModal({ isOpen, onClose, entityType, entity, onSave }: EditPedigreeModalProps) {
+export default function EditPedigreeModal({ isOpen, onClose, entityType, entity, onSave, setGetFormDataRef }: EditPedigreeModalProps) {
   const isDam = entityType === 'dam';
   const schema = isDam ? damSchema : sireSchema;
   const { toast } = useToast();
@@ -56,13 +55,24 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
   const [photoPreview, setPhotoPreview] = useState<string | null>(entity.photoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, getValues, formState: { isSubmitting } } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: entity,
+    defaultValues: {
+        ...entity,
+        offspring: 'offspring' in entity ? entity.offspring || undefined : undefined,
+    },
   });
 
   useEffect(() => {
-    reset(entity);
+    // Set the ref to a function that can be called by the parent to get current form values
+    setGetFormDataRef.current = () => getValues();
+  }, [getValues, setGetFormDataRef]);
+
+  useEffect(() => {
+    reset({
+        ...entity,
+        offspring: 'offspring' in entity ? entity.offspring || undefined : undefined,
+    });
     setPhotoPreview(entity.photoUrl || null);
   }, [entity, reset]);
 
@@ -84,20 +94,17 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
     }
   };
 
-  const onSubmit = (data: DamFormData | SireFormData) => {
-    // Exclude photoUrl from the main text save, as it's handled separately
-    const { photoUrl, ...textData } = data;
-    
+  const onSubmit = (data: FormData) => {
     let processedData: Partial<Dam> | Partial<Sire>;
 
     if (isDam) {
-        const offspringAsNumber = Number((textData as DamFormData).offspring);
+        const offspringAsNumber = Number((data as Dam).offspring);
         processedData = {
-          ...textData,
+          ...data,
           offspring: isNaN(offspringAsNumber) || offspringAsNumber === 0 ? undefined : offspringAsNumber
         };
     } else {
-        processedData = textData;
+        processedData = data;
     }
     
     onSave(processedData);
