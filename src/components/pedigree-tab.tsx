@@ -29,6 +29,9 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
   // Create a ref to hold a function that can get the current form data
   const getFormDataRef = useRef<() => Dam | Sire | {}>(() => ({}));
 
+  const dam = animal.pedigree?.dam;
+  const sire = animal.pedigree?.sire;
+
 
   const handleOpenModal = (entityType: 'dam' | 'sire') => {
     setEditingEntity(entityType);
