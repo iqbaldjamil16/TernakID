@@ -35,7 +35,6 @@ const sireSchema = z.object({
   characteristics: z.string().optional(),
 });
 
-// The form can contain fields from both schemas.
 const combinedSchema = damSchema.merge(sireSchema);
 type FormData = z.infer<typeof combinedSchema>;
 
@@ -64,8 +63,6 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
     },
   });
 
-  // This ref allows the parent component (pedigree-tab) to get the current form data,
-  // which is crucial for merging photo uploads with existing text data.
   useEffect(() => {
     setGetFormDataRef.current = () => {
         const values = getValues();
@@ -103,10 +100,10 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
         setPhotoPreview(dataUrl); // Optimistic UI update
-        // Immediately save the photo data
+        // Immediately save the photo data, which triggers the parent's handleSave
         onSave({ photoUrl: dataUrl });
         toast({
-          title: "Foto Disimpan",
+          title: "Foto Diperbarui",
           description: "Foto baru sedang disimpan secara permanen.",
         });
       };
@@ -114,6 +111,7 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
     }
   };
 
+  // This function now only handles text form submission
   const onSubmit = (data: FormData) => {
     let processedData: Partial<Dam> | Partial<Sire>;
 
@@ -126,7 +124,6 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
           offspring: isNaN(offspringAsNumber as number) ? undefined : offspringAsNumber,
         };
     } else {
-        // Explicitly construct the sire data to ensure 'offspring' is never included.
         processedData = {
             name: data.name,
             semenId: data.semenId,
@@ -135,7 +132,9 @@ export default function EditPedigreeModal({ isOpen, onClose, entityType, entity,
         };
     }
     
+    // onSave will merge this text data with any existing data (like a photoUrl)
     onSave(processedData);
+    
     toast({
         title: 'Sukses',
         description: `Data teks untuk ${isDam ? 'Induk' : 'Pejantan'} berhasil diperbarui.`,

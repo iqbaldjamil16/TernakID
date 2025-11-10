@@ -4,7 +4,6 @@ import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Livestock, Pedigree, Dam, Sire } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { Pencil } from 'lucide-react';
 import EditPedigreeModal from './edit-pedigree-modal';
@@ -22,12 +21,11 @@ interface PedigreeTabProps {
 }
 
 export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
-  const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntity, setEditingEntity] = useState<'dam' | 'sire' | null>(null);
   
-  // Create a ref to hold a function that can get the current form data
-  const getFormDataRef = useRef<() => Dam | Sire | {}>(() => ({}));
+  // This ref holds a function to get the current form data from the modal.
+  const getFormDataRef = useRef<() => Partial<Dam> | Partial<Sire>>(() => ({}));
 
   const dam = animal.pedigree?.dam;
   const sire = animal.pedigree?.sire;
@@ -43,22 +41,33 @@ export function PedigreeTab({ animal, onUpdate }: PedigreeTabProps) {
     setIsModalOpen(false);
   };
 
+  // This function is now robust. It handles both text and photo updates.
   const handleSave = (updatedData: Partial<Dam> | Partial<Sire>) => {
     if (!editingEntity) return;
 
-    // Get the latest form data using the function from the ref,
-    // and combine it with the partial update (e.g., from a photo upload).
+    // Get the latest text data from the form inside the modal.
     const currentFormData = getFormDataRef.current();
-    const finalData = { ...currentFormData, ...updatedData };
+    
+    // Get the existing data for the entity being edited.
+    const existingEntityData = animal.pedigree?.[editingEntity] || {};
+
+    // Merge everything: existing data + current form text + the new update (e.g., photo).
+    // This ensures no data is lost.
+    const finalData = { ...existingEntityData, ...currentFormData, ...updatedData };
     
     const updatedPedigree = {
       ...animal.pedigree,
       [editingEntity]: finalData,
     };
     
+    // Send the complete, merged pedigree object for update.
     onUpdate({ pedigree: updatedPedigree as Pedigree });
-    // Toast is now more general since this function handles both text and photo saves.
-    handleCloseModal();
+    
+    // Only close the modal if it wasn't just a photo upload,
+    // which happens in the background.
+    if (!('photoUrl' in updatedData)) {
+      handleCloseModal();
+    }
   };
 
   const entityToEdit = editingEntity ? (animal.pedigree?.[editingEntity] || {}) : {};
