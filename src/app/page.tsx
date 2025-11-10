@@ -9,40 +9,39 @@ import type { Livestock } from '@/lib/types';
 export default function Home() {
   const [allAnimals, setAllAnimals] = useState<Livestock[]>([]);
   const [selectedAnimalId, setSelectedAnimalId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // This flag prevents multiple data creation attempts if the component re-renders.
-    let isDataCreationInitiated = false;
-
+    // The listener is set up once and handles all data updates.
     const unsubscribe = listenToAnimals((animals) => {
-      setIsLoading(false);
+      // If the listener returns an empty array, it means no data exists yet.
+      // We trigger the creation of default data in this case.
+      if (animals.length === 0) {
+        // We don't need to show a loading state here, as the listener
+        // will automatically receive the new data once it's created.
+        createDefaultAnimals().catch(console.error);
+      }
       
-      // If we receive an empty list and data creation hasn't started yet.
-      if (animals.length === 0 && !isDataCreationInitiated) {
-        isDataCreationInitiated = true; // Mark as initiated.
-        setIsLoading(true); // Show a loading state for the initial data preparation.
-        createDefaultAnimals().catch(console.error); // We don't need to do anything in `finally`, listener will get new data.
-      } else {
-        setAllAnimals(animals);
-        // Auto-select the first animal if none is selected, or if the selected one disappears.
-        if (animals.length > 0 && (!selectedAnimalId || !animals.some(a => a.id === selectedAnimalId))) {
-          setSelectedAnimalId(animals[0].id);
-        }
+      setAllAnimals(animals);
+
+      // If no animal is selected, or the selected one is no longer in the list,
+      // default to selecting the first animal.
+      if (animals.length > 0 && (!selectedAnimalId || !animals.some(a => a.id === selectedAnimalId))) {
+        setSelectedAnimalId(animals[0].id);
+      } else if (animals.length === 0) {
+        // If there are no animals at all, clear the selection.
+        setSelectedAnimalId(null);
       }
     });
 
+    // Cleanup the listener when the component unmounts.
     return () => unsubscribe();
-    // By keeping the dependency array empty, we ensure the listener is set up only once.
-    // The listener itself handles all subsequent state updates from Firestore.
-  }, [selectedAnimalId]);
+  }, [selectedAnimalId]); // We keep selectedAnimalId here to re-evaluate the selection logic if it changes.
 
   const handleSelectAnimal = useCallback((id: string) => {
     setSelectedAnimalId(id);
   }, []);
   
   const selectedAnimal = useMemo(() => {
-    // Find the selected animal from the full list
     return allAnimals.find(animal => animal.id === selectedAnimalId) ?? null;
   }, [allAnimals, selectedAnimalId]);
 
@@ -53,26 +52,20 @@ export default function Home() {
           animals={allAnimals}
           selectedAnimalId={selectedAnimalId}
           onSelect={handleSelectAnimal}
-          isPreparingData={isLoading && allAnimals.length === 0}
+          isPreparingData={allAnimals.length === 0}
         />
         <SidebarInset>
           <div className="p-4 sm:p-6 lg:p-8">
-            {isLoading ? (
+            {allAnimals.length === 0 ? (
               <div className="flex h-[80vh] items-center justify-center rounded-xl bg-card shadow-sm">
-                <p className="text-muted-foreground">{allAnimals.length === 0 ? "Sedang menyiapkan data ternak awal..." : "Memuat data ternak..."}</p>
+                <p className="text-muted-foreground">Sedang menyiapkan data ternak awal...</p>
               </div>
             ) : selectedAnimal ? (
               <LivestockDetails key={selectedAnimal.id} animal={selectedAnimal} />
-            ) : allAnimals.length > 0 ? (
-              <div className="flex h-[80vh] items-center justify-center rounded-xl bg-card shadow-sm">
-                <p className="text-muted-foreground">
-                  Pilih ternak dari daftar untuk melihat detail
-                </p>
-              </div>
             ) : (
-               <div className="flex h-[80vh] items-center justify-center rounded-xl bg-card shadow-sm">
-                 <p className="text-muted-foreground">Tidak ada data ternak. Memuat ulang mungkin akan membantu.</p>
-               </div>
+              <div className="flex h-[80vh] items-center justify-center rounded-xl bg-card shadow-sm">
+                <p className="text-muted-foreground">Pilih ternak dari daftar untuk melihat detail.</p>
+              </div>
             )}
           </div>
         </SidebarInset>
