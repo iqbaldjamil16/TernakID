@@ -67,7 +67,7 @@ export default function LivestockSidebar({ animals, selectedAnimalId, onSelect, 
                 onClick={() => onSelect(animal.id)}
                 isActive={selectedAnimalId === animal.id}
                 tooltip={{ children: `${animal.name} (${animal.regId})`, side: "right", align: "center" }}
-                className="text-base"
+                className="text-lg"
               >
                 {animal.name}
               </SidebarMenuButton>
