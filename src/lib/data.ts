@@ -104,7 +104,6 @@ export function listenToAnimals(callback: (animals: Livestock[]) => void): () =>
         path: livestockCollectionRef.path,
         operation: 'list',
       });
-      console.error(permissionError.message);
       errorEmitter.emit('permission-error', permissionError);
   });
   return unsubscribe;
@@ -119,7 +118,6 @@ export const updateAnimal = async (id: string, updatedData: Partial<Omit<Livesto
       operation: 'update',
       requestResourceData: updatedData,
     });
-    console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
     throw permissionError;
   });
@@ -135,7 +133,6 @@ export const updateAnimalPhoto = async (id: string, photoUrl: string): Promise<v
       operation: 'update',
       requestResourceData: updatedData,
     });
-    console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
     throw permissionError;
   });
@@ -153,7 +150,6 @@ export const addHealthLog = async (animalId: string, log: Omit<HealthLog, 'id'>)
       operation: 'update',
       requestResourceData: { healthLog: [newLog] },
     });
-    console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
     throw permissionError;
   }
@@ -183,7 +179,6 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
       operation: 'update',
       requestResourceData: { healthLog: [updatedLog] },
     });
-    console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
     throw permissionError;
   }
@@ -201,7 +196,6 @@ export const addReproductionLog = async (animalId: string, log: Omit<Reproductio
       operation: 'update',
       requestResourceData: { reproductionLog: [newLog] },
     });
-    console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
     throw permissionError;
   }
@@ -230,7 +224,6 @@ export const updateReproductionLog = async (animalId: string, updatedLog: Reprod
       operation: 'update',
       requestResourceData: { reproductionLog: [updatedLog] },
     });
-    console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
     throw permissionError;
   }
@@ -248,7 +241,6 @@ export const addGrowthRecord = async (animalId: string, record: Omit<GrowthRecor
       operation: 'update',
       requestResourceData: { growthRecords: [newRecord] },
     });
-    console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
     throw permissionError;
   }
@@ -280,7 +272,6 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
       operation: 'update',
       requestResourceData: { growthRecords: [updatedRecord] },
     });
-    console.error(permissionError.message);
     errorEmitter.emit('permission-error', permissionError);
     throw permissionError;
   }
