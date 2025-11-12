@@ -9,6 +9,7 @@ import {
   updateReproductionLog,
   addGrowthRecord,
   updateGrowthRecord,
+  deleteGrowthRecord,
   updateAnimalPhoto,
 } from '@/lib/data';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord, Pedigree } from '@/lib/types';
@@ -100,6 +101,15 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
     await updateGrowthRecord(currentAnimal.id, record);
     // Data will be re-fetched by the listener
   }, [currentAnimal.id]);
+
+  const handleDeleteGrowthRecord = useCallback(async (recordId: string) => {
+    await deleteGrowthRecord(currentAnimal.id, recordId);
+    toast({
+        title: "Catatan Dihapus",
+        description: "Catatan pertumbuhan telah berhasil dihapus.",
+    });
+    // Data will be re-fetched by the listener
+  }, [currentAnimal.id, toast]);
 
   const handleUpdatePedigree = useCallback(async (data: { pedigree: Pedigree }) => {
     await updateAnimal(currentAnimal.id, { pedigree: data.pedigree });
@@ -207,6 +217,7 @@ export default function LivestockDetails({ animal }: { animal: Livestock }) {
                 animal={currentAnimal} 
                 onAddRecord={handleAddGrowthRecord} 
                 onUpdateRecord={handleUpdateGrowthRecord}
+                onDeleteRecord={handleDeleteGrowthRecord}
                 withPasswordProtection={withPasswordProtection}
               />
             </TabsContent>

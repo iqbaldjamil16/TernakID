@@ -51,10 +51,11 @@ interface GrowthTabProps {
   animal: Livestock;
   onAddRecord: (record: Omit<GrowthRecord, 'id' | 'adg'>) => void;
   onUpdateRecord: (record: GrowthRecord) => void;
+  onDeleteRecord: (recordId: string) => void;
   withPasswordProtection: (action: () => void) => void;
 }
 
-export function GrowthTab({ animal, onAddRecord, onUpdateRecord, withPasswordProtection }: GrowthTabProps) {
+export function GrowthTab({ animal, onAddRecord, onUpdateRecord, onDeleteRecord, withPasswordProtection }: GrowthTabProps) {
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<GrowthRecord | null>(null);
@@ -120,6 +121,13 @@ export function GrowthTab({ animal, onAddRecord, onUpdateRecord, withPasswordPro
       setEditingRecord(null);
     };
     withPasswordProtection(saveAction);
+  };
+
+  const handleDelete = (recordId: string) => {
+    const deleteAction = () => {
+        onDeleteRecord(recordId);
+    };
+    withPasswordProtection(deleteAction);
   };
 
   const openEditModal = (record: GrowthRecord) => {
@@ -193,6 +201,25 @@ export function GrowthTab({ animal, onAddRecord, onUpdateRecord, withPasswordPro
                         <Button variant="ghost" size="icon" onClick={() => openEditModal(record)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Anda yakin?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tindakan ini tidak dapat diurungkan. Ini akan menghapus catatan pertumbuhan secara permanen.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Batal</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(record.id)} className="bg-destructive hover:bg-destructive/90">Hapus</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                        </div>
                     </TableCell>
                   </TableRow>

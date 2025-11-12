@@ -158,7 +158,7 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
     const animalDoc = await getDoc(docRef);
-    if (!animalDoc.exists()) throw "Document does not exist!";
+    if (!animalDoc.exists()) throw new Error("Document does not exist!");
     
     const currentLogs: HealthLog[] = (animalDoc.data().healthLog || []).map((log: any) => ({
       ...log, 
@@ -171,7 +171,7 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
     if (logIndex !== -1) {
       currentLogs[logIndex] = updatedLog;
     } else {
-       throw `Log with id ${updatedLog.id} not found.`;
+       throw new Error(`Log with id ${updatedLog.id} not found.`);
     }
 
     await setDoc(docRef, { healthLog: currentLogs }, { merge: true });
@@ -209,7 +209,7 @@ export const updateReproductionLog = async (animalId: string, updatedLog: Reprod
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
     const animalDoc = await getDoc(docRef);
-    if (!animalDoc.exists()) throw "Document does not exist!";
+    if (!animalDoc.exists()) throw new Error("Document does not exist!");
 
     const currentLogs: ReproductionLog[] = (animalDoc.data().reproductionLog || []).map((log: any) => ({
       ...log,
@@ -222,7 +222,7 @@ export const updateReproductionLog = async (animalId: string, updatedLog: Reprod
     if (logIndex !== -1) {
       currentLogs[logIndex] = updatedLog;
     } else {
-      throw `Log with id ${updatedLog.id} not found.`;
+      throw new Error(`Log with id ${updatedLog.id} not found.`);
     }
 
     await setDoc(docRef, { reproductionLog: currentLogs }, { merge: true });
@@ -261,10 +261,9 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
   try {
     const animalDoc = await getDoc(docRef);
     if (!animalDoc.exists()) {
-      throw "Document does not exist!";
+      throw new Error("Document does not exist!");
     }
 
-    // Ensure all records from Firestore have a valid ID for comparison
     const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({
       ...rec,
       id: rec.id || `gr_fallback_${rec.date.toMillis()}_${Math.random()}`,
@@ -276,10 +275,9 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
     if (recordIndex !== -1) {
       currentRecords[recordIndex] = updatedRecord;
     } else {
-      throw `Record with id ${updatedRecord.id} not found for update.`;
+      throw new Error(`Record with id ${updatedRecord.id} not found for update.`);
     }
     
-    // Remove the 'adg' property before writing to Firestore, as it's a calculated value.
     const recordsToSave = currentRecords.map(({ adg, ...rest }) => rest);
 
     await setDoc(docRef, { growthRecords: recordsToSave }, { merge: true });
@@ -289,6 +287,38 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
       path: docRef.path,
       operation: 'update',
       requestResourceData: { growthRecords: [updatedRecord] },
+    });
+    errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
+  }
+};
+
+export const deleteGrowthRecord = async (animalId: string, recordId: string): Promise<void> => {
+  const { firestore } = initializeFirebase();
+  const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
+  try {
+    const animalDoc = await getDoc(docRef);
+    if (!animalDoc.exists()) {
+      throw new Error("Document does not exist!");
+    }
+
+    const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({
+      ...rec,
+      id: rec.id || `gr_fallback_${rec.date.toMillis()}_${Math.random()}`,
+      date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date),
+    }));
+
+    const updatedRecords = currentRecords.filter(rec => rec.id !== recordId);
+    
+    const recordsToSave = updatedRecords.map(({ adg, ...rest }) => rest);
+
+    await setDoc(docRef, { growthRecords: recordsToSave }, { merge: true });
+    
+  } catch (e) {
+    const permissionError = new FirestorePermissionError({
+      path: docRef.path,
+      operation: 'update',
+      requestResourceData: { growthRecords: [] }, // Simplified for deletion
     });
     errorEmitter.emit('permission-error', permissionError);
     throw permissionError;
