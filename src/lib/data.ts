@@ -13,6 +13,7 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  getDoc,
 } from 'firebase/firestore';
 import { initializeFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import type { Livestock, HealthLog, ReproductionLog, GrowthRecord } from '@/lib/types';
@@ -250,24 +251,29 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
-    await runTransaction(firestore, async (transaction) => {
-      const animalDoc = await transaction.get(docRef);
-      if (!animalDoc.exists()) {
-        throw "Document does not exist!";
-      }
-      const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({...rec, id: rec.id || `gr_${rec.date.toMillis()}`, date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date)}));
-      const recordIndex = currentRecords.findIndex(rec => rec.id === updatedRecord.id);
-      
-      if (recordIndex !== -1) {
-         currentRecords[recordIndex] = updatedRecord;
-      } else {
-         throw `Record with id ${updatedRecord.id} not found.`;
-      }
-      
-      transaction.update(docRef, { growthRecords: currentRecords });
-    });
+    const animalDoc = await getDoc(docRef);
+    if (!animalDoc.exists()) {
+      throw "Document does not exist!";
+    }
+
+    const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({
+      ...rec,
+      id: rec.id || `gr_${rec.date.toMillis()}`,
+      date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date),
+    }));
+
+    const recordIndex = currentRecords.findIndex(rec => rec.id === updatedRecord.id);
+
+    if (recordIndex !== -1) {
+      currentRecords[recordIndex] = updatedRecord;
+    } else {
+      throw `Record with id ${updatedRecord.id} not found.`;
+    }
+
+    await updateDoc(docRef, { growthRecords: currentRecords });
+
   } catch (e) {
-     const permissionError = new FirestorePermissionError({
+    const permissionError = new FirestorePermissionError({
       path: docRef.path,
       operation: 'update',
       requestResourceData: { growthRecords: [updatedRecord] },
