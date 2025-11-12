@@ -40,10 +40,7 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
     reproductionLog: [
        { id: `rl_${now}_${idNumber}_1`, date: new Date(birthDate.getTime() + 730 * 24 * 3600 * 1000), type: 'Inseminasi Buatan (IB)', detail: 'Semen ID: BX-01', notes: 'IB pertama' },
     ],
-    growthRecords: [
-      { id: `gr_${now}_${idNumber}_1`, date: birthDate, weight: 30 + (idNumber % 10) },
-      { id: `gr_${now}_${idNumber}_2`, date: new Date(birthDate.getTime() + 180 * 24 * 3600 * 1000), weight: 150 + (idNumber % 50) },
-    ],
+    growthRecords: [],
     pedigree: {
       dam: { name: `Induk-${1000 + idNumber}`, regId: `IND-${1000 + idNumber}`, breed: "Sapi Bali", offspring: 2 },
       sire: { name: `Pejantan-${2000 + idNumber}`, semenId: `PJT-${2000 + idNumber}`, breed: "Simental", characteristics: "Postur tinggi" },
