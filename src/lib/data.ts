@@ -7,12 +7,10 @@ import {
   setDoc,
   writeBatch,
   onSnapshot,
-  runTransaction,
   query,
   limit,
   updateDoc,
   arrayUnion,
-  arrayRemove,
   getDoc,
 } from 'firebase/firestore';
 import { initializeFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -72,8 +70,6 @@ export async function createDefaultAnimals(count = 100) {
     await batch.commit();
     console.log(`${count} default animals created successfully.`);
   } catch (error) {
-    console.error("Error creating default animals:", error);
-    // Propagate a generic permission error if something fails during write.
     const permissionError = new FirestorePermissionError({
       path: LIVESTOCK_COLLECTION,
       operation: 'create',
@@ -161,19 +157,25 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
-    await runTransaction(firestore, async (transaction) => {
-      const animalDoc = await transaction.get(docRef);
-      if (!animalDoc.exists()) {
-        throw "Document does not exist!";
-      }
-      const currentLogs: HealthLog[] = (animalDoc.data().healthLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)}));
-      const logIndex = currentLogs.findIndex(log => log.id === updatedLog.id);
-      if (logIndex === -1) {
-        throw `Log with id ${updatedLog.id} not found.`;
-      }
+    const animalDoc = await getDoc(docRef);
+    if (!animalDoc.exists()) throw "Document does not exist!";
+    
+    const currentLogs: HealthLog[] = (animalDoc.data().healthLog || []).map((log: any) => ({
+      ...log, 
+      id: log.id || `hl_fallback_${Math.random()}`,
+      date: log.date?.toDate ? log.date.toDate() : new Date(log.date)
+    }));
+      
+    const logIndex = currentLogs.findIndex(log => log.id === updatedLog.id);
+    
+    if (logIndex !== -1) {
       currentLogs[logIndex] = updatedLog;
-      transaction.update(docRef, { healthLog: currentLogs });
-    });
+    } else {
+       throw `Log with id ${updatedLog.id} not found.`;
+    }
+
+    await updateDoc(docRef, { healthLog: currentLogs });
+
   } catch (e) {
      const permissionError = new FirestorePermissionError({
       path: docRef.path,
@@ -206,19 +208,25 @@ export const updateReproductionLog = async (animalId: string, updatedLog: Reprod
   const { firestore } = initializeFirebase();
   const docRef = doc(firestore, LIVESTOCK_COLLECTION, animalId);
   try {
-    await runTransaction(firestore, async (transaction) => {
-      const animalDoc = await transaction.get(docRef);
-      if (!animalDoc.exists()) {
-        throw "Document does not exist!";
-      }
-      const currentLogs: ReproductionLog[] = (animalDoc.data().reproductionLog || []).map((log: any) => ({...log, date: log.date?.toDate ? log.date.toDate() : new Date(log.date)}));
-      const logIndex = currentLogs.findIndex(log => log.id === updatedLog.id);
-      if (logIndex === -1) {
-        throw `Log with id ${updatedLog.id} not found.`;
-      }
+    const animalDoc = await getDoc(docRef);
+    if (!animalDoc.exists()) throw "Document does not exist!";
+
+    const currentLogs: ReproductionLog[] = (animalDoc.data().reproductionLog || []).map((log: any) => ({
+      ...log,
+      id: log.id || `rl_fallback_${Math.random()}`,
+      date: log.date?.toDate ? log.date.toDate() : new Date(log.date)
+    }));
+
+    const logIndex = currentLogs.findIndex(log => log.id === updatedLog.id);
+    
+    if (logIndex !== -1) {
       currentLogs[logIndex] = updatedLog;
-      transaction.update(docRef, { reproductionLog: currentLogs });
-    });
+    } else {
+      throw `Log with id ${updatedLog.id} not found.`;
+    }
+
+    await updateDoc(docRef, { reproductionLog: currentLogs });
+
   } catch (e) {
      const permissionError = new FirestorePermissionError({
       path: docRef.path,
@@ -256,9 +264,10 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
       throw "Document does not exist!";
     }
 
+    // Ensure all records from Firestore have a valid ID for comparison
     const currentRecords: GrowthRecord[] = (animalDoc.data().growthRecords || []).map((rec: any) => ({
       ...rec,
-      id: rec.id || `gr_${rec.date.toMillis()}`,
+      id: rec.id || `gr_fallback_${rec.date.toMillis()}_${Math.random()}`,
       date: rec.date?.toDate ? rec.date.toDate() : new Date(rec.date),
     }));
 
@@ -267,10 +276,15 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
     if (recordIndex !== -1) {
       currentRecords[recordIndex] = updatedRecord;
     } else {
-      throw `Record with id ${updatedRecord.id} not found.`;
+      // This could happen if the record being edited was just added and its ID from the UI is temporary.
+      // As a fallback, we'll log it, but for a robust app, you might need a more sophisticated state management.
+      throw `Record with id ${updatedRecord.id} not found for update.`;
     }
+    
+    // Remove the 'adg' property before writing to Firestore, as it's a calculated value.
+    const recordsToSave = currentRecords.map(({ adg, ...rest }) => rest);
 
-    await updateDoc(docRef, { growthRecords: currentRecords });
+    await updateDoc(docRef, { growthRecords: recordsToSave });
 
   } catch (e) {
     const permissionError = new FirestorePermissionError({
