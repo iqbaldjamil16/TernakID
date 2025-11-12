@@ -174,7 +174,7 @@ export const updateHealthLog = async (animalId: string, updatedLog: HealthLog): 
        throw `Log with id ${updatedLog.id} not found.`;
     }
 
-    await updateDoc(docRef, { healthLog: currentLogs });
+    await setDoc(docRef, { healthLog: currentLogs }, { merge: true });
 
   } catch (e) {
      const permissionError = new FirestorePermissionError({
@@ -225,7 +225,7 @@ export const updateReproductionLog = async (animalId: string, updatedLog: Reprod
       throw `Log with id ${updatedLog.id} not found.`;
     }
 
-    await updateDoc(docRef, { reproductionLog: currentLogs });
+    await setDoc(docRef, { reproductionLog: currentLogs }, { merge: true });
 
   } catch (e) {
      const permissionError = new FirestorePermissionError({
@@ -276,15 +276,13 @@ export const updateGrowthRecord = async (animalId: string, updatedRecord: Growth
     if (recordIndex !== -1) {
       currentRecords[recordIndex] = updatedRecord;
     } else {
-      // This could happen if the record being edited was just added and its ID from the UI is temporary.
-      // As a fallback, we'll log it, but for a robust app, you might need a more sophisticated state management.
       throw `Record with id ${updatedRecord.id} not found for update.`;
     }
     
     // Remove the 'adg' property before writing to Firestore, as it's a calculated value.
     const recordsToSave = currentRecords.map(({ adg, ...rest }) => rest);
 
-    await updateDoc(docRef, { growthRecords: recordsToSave });
+    await setDoc(docRef, { growthRecords: recordsToSave }, { merge: true });
 
   } catch (e) {
     const permissionError = new FirestorePermissionError({
