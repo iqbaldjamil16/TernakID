@@ -4,6 +4,7 @@ import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 // We will use a singleton pattern to ensure Firebase is initialized only once.
 let firebaseServices: {
@@ -23,6 +24,20 @@ export function initializeFirebase() {
 
   // Initialize the Firebase App.
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  
+  if (typeof window !== 'undefined') {
+    // Pastikan process.env.NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY tersedia
+    // Anda harus mengaturnya di file .env.local
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY) {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider(process.env.NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY),
+        isTokenAutoRefreshEnabled: true
+      });
+    } else {
+      console.warn('Kunci situs reCAPTCHA Enterprise tidak ditemukan. App Check tidak diinisialisasi.');
+    }
+  }
+
 
   // Initialize Auth.
   const auth = getAuth(app);
@@ -31,7 +46,7 @@ export function initializeFirebase() {
   const firestore = getFirestore(app);
 
   // Attempt to enable persistence, but only once.
-  if (!persistenceEnabled) {
+  if (!persistenceEnabled && typeof window !== 'undefined') {
     enableIndexedDbPersistence(firestore)
       .then(() => {
         // This will only be logged once in the entire app lifecycle.
