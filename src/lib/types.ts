@@ -1,3 +1,4 @@
+
 export type HealthLog = {
   id: string; // Unique identifier
   date: Date;
@@ -58,3 +59,5 @@ export type Livestock = {
   growthRecords: GrowthRecord[];
   pedigree?: Pedigree;
 };
+
+    
