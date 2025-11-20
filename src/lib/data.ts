@@ -88,13 +88,8 @@ export async function createNewAnimal() {
 
   try {
     const snapshot = await getDocs(livestockCollectionRef);
-    const existingIds = snapshot.docs.map(doc => {
-      const match = doc.id.match(/^KIT-(\d+)$/);
-      return match ? parseInt(match[1], 10) : 0;
-    });
-
-    const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
-    const newIdNumber = maxId + 1;
+    // This logic ensures that the new ID is always one greater than the number of existing animals.
+    const newIdNumber = snapshot.size + 1; 
     const newDocId = `KIT-${String(newIdNumber).padStart(3, '0')}`;
     
     const newAnimalData: Livestock = {
