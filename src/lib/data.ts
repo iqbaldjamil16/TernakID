@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -50,7 +49,8 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
   };
 };
 
-export async function createDefaultAnimals(count = 14) {
+export async function createDefaultAnimals() {
+  const count = 14;
   const { firestore } = initializeFirebase();
   try {
     const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
@@ -81,6 +81,54 @@ export async function createDefaultAnimals(count = 14) {
     throw permissionError;
   }
 }
+
+export async function createNewAnimal() {
+  const { firestore } = initializeFirebase();
+  const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
+
+  try {
+    const snapshot = await getDocs(livestockCollectionRef);
+    const existingIds = snapshot.docs.map(doc => {
+      const match = doc.id.match(/^KIT-(\d+)$/);
+      return match ? parseInt(match[1], 10) : 0;
+    });
+
+    const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
+    const newIdNumber = maxId + 1;
+    const newDocId = `KIT-${String(newIdNumber).padStart(3, '0')}`;
+    
+    const newAnimalData: Livestock = {
+      id: newDocId,
+      name: `Ternak Baru ${newIdNumber}`,
+      regId: newDocId,
+      breed: 'Belum Ditentukan',
+      gender: 'Jantan',
+      status: 'Produktif',
+      owner: 'Belum Ditentukan',
+      address: 'Belum Ditentukan',
+      birthDate: new Date(),
+      photoUrl: `https://picsum.photos/seed/animal${newIdNumber}/400/400`,
+      healthLog: [],
+      reproductionLog: [],
+      growthRecords: [],
+      pedigree: {},
+    };
+
+    const docRef = doc(firestore, LIVESTOCK_COLLECTION, newDocId);
+    await setDoc(docRef, newAnimalData);
+    
+    return newDocId;
+
+  } catch (error) {
+    const permissionError = new FirestorePermissionError({
+      path: livestockCollectionRef.path,
+      operation: 'create',
+    });
+    errorEmitter.emit('permission-error', permissionError);
+    throw permissionError;
+  }
+}
+
 
 export function listenToAnimals(callback: (animals: Livestock[]) => void): () => void {
   const { firestore } = initializeFirebase();

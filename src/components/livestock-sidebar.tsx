@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Sidebar,
@@ -9,20 +8,23 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarInput,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { SheetTitle } from '@/components/ui/sheet';
-import { Leaf, Search, Loader } from 'lucide-react';
+import { Leaf, Search, Loader, PlusCircle } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import type { Livestock } from '@/lib/types';
+import { Button } from './ui/button';
 
 type LivestockSidebarProps = {
   animals: Livestock[];
   selectedAnimalId: string | null;
   onSelect: (id: string) => void;
+  onAddNew: () => void;
   isPreparingData: boolean;
 };
 
-export default function LivestockSidebar({ animals, selectedAnimalId, onSelect, isPreparingData }: LivestockSidebarProps) {
+export default function LivestockSidebar({ animals, selectedAnimalId, onSelect, onAddNew, isPreparingData }: LivestockSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredAnimals = useMemo(() => {
@@ -56,6 +58,11 @@ export default function LivestockSidebar({ animals, selectedAnimalId, onSelect, 
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
+            <Button variant="outline" className="w-full justify-start" onClick={onAddNew}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Tambah Ternak Baru
+            </Button>
+            <SidebarSeparator className="my-2" />
           {isPreparingData && (
             <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
                 <Loader className="mr-2 h-4 w-4 animate-spin" />
