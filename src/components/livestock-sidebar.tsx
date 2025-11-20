@@ -49,7 +49,7 @@ export default function LivestockSidebar({ animals, selectedAnimalId, onSelect, 
           className="w-full max-w-[300px] p-0"
         >
           <div className="flex h-full flex-col">
-            <div className="flex flex-col gap-2 p-2">
+            <SidebarHeader>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center size-8 rounded-lg bg-primary text-primary-foreground">
                         <Leaf className="size-5" />
@@ -65,10 +65,10 @@ export default function LivestockSidebar({ animals, selectedAnimalId, onSelect, 
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-              </div>
+              </SidebarHeader>
             <SidebarContent>
               <SidebarMenu>
-                <Button variant="outline" className="w-full justify-start" onClick={onAddNew}>
+                <Button variant="outline" className="w-full justify-start text-base" onClick={onAddNew}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Tambah Ternak Baru
                 </Button>
@@ -126,7 +126,7 @@ export default function LivestockSidebar({ animals, selectedAnimalId, onSelect, 
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-            <Button variant="outline" className="w-full justify-start" onClick={onAddNew}>
+            <Button variant="outline" className="w-full justify-start text-base" onClick={onAddNew}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Tambah Ternak Baru
             </Button>
