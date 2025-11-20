@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -83,7 +84,7 @@ export async function createDefaultAnimals(count = 14) {
 
 export function listenToAnimals(callback: (animals: Livestock[]) => void): () => void {
   const { firestore } = initializeFirebase();
-  const livestockCollectionRef = collection(firestore, LIVESTOCK_COLlection);
+  const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
   const unsubscribe = onSnapshot(livestockCollectionRef, (snapshot) => {
     const animals = snapshot.docs.map(doc => {
         const data = doc.data();
