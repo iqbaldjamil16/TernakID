@@ -22,9 +22,11 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
   const birthDate = new Date(2023, 0, 1 + (idNumber % 30));
   birthDate.setFullYear(birthDate.getFullYear() - (idNumber % 5));
   const now = Date.now();
+  
+  const animalName = idNumber === 1 ? "Bambang" : `Ternak ${idNumber}`;
 
   return {
-    name: `Ternak ${idNumber}`,
+    name: animalName,
     regId: `KIT-${String(idNumber).padStart(3, '0')}`,
     photoUrl: `https://picsum.photos/seed/animal${idNumber}/400/400`,
     breed: (idNumber % 3 === 0) ? "Sapi Bali" : (idNumber % 3 === 1) ? "Sapi Ongole" : "Simental",
@@ -47,7 +49,7 @@ const generateDefaultData = (idNumber: number): Omit<Livestock, 'id'> => {
   };
 };
 
-export async function createDefaultAnimals(count = 100) {
+export async function createDefaultAnimals(count = 14) {
   const { firestore } = initializeFirebase();
   try {
     const livestockCollectionRef = collection(firestore, LIVESTOCK_COLLECTION);
